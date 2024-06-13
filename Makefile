@@ -15,8 +15,8 @@ install-release: .venv
 pre-commit: .venv
 	cargo fmt --all && cargo clippy --all-features
 	.venv/bin/python -m ruff check . --fix --exit-non-zero-on-fix
-	.venv/bin/python -m ruff format polars_geoip tests
-	.venv/bin/mypy polars_geoip tests
+	.venv/bin/python -m ruff format polars_iptools tests
+	.venv/bin/mypy polars_iptools tests
 
 test: .venv
 	.venv/bin/python -m pytest tests
@@ -26,4 +26,3 @@ run: install
 
 run-release: install-release
 	source .venv/bin/activate && python run.py
-

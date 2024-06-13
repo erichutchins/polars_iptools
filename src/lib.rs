@@ -1,4 +1,5 @@
-mod expressions;
+mod geoip;
+mod iptools;
 mod utils;
 
 #[cfg(target_os = "linux")]
@@ -12,7 +13,8 @@ use pyo3::types::PyModule;
 use pyo3::{pymodule, Bound, PyResult};
 
 #[pymodule]
-fn polars_geoip(m: &Bound<'_, PyModule>) -> PyResult<()> {
+#[pyo3(name = "_polars_iptools")]
+fn polars_iptools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
 }
