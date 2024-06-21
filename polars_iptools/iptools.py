@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Set, Union
 
 import polars as pl
 
@@ -16,6 +16,9 @@ lib = get_shared_lib_location()
 
 
 def is_valid(expr: IntoExpr) -> pl.Expr:
+    """
+    Returns a boolean if string is a valid IPv4 or IPv6 address
+    """
     expr = parse_into_expr(expr)
     return register_plugin(
         args=[expr],
@@ -26,6 +29,9 @@ def is_valid(expr: IntoExpr) -> pl.Expr:
 
 
 def is_private(expr: IntoExpr) -> pl.Expr:
+    """
+    Returns a boolean if string is an IETF RFC 1918 IPv4 address
+    """
     expr = parse_into_expr(expr)
     return register_plugin(
         args=[expr],
@@ -36,6 +42,9 @@ def is_private(expr: IntoExpr) -> pl.Expr:
 
 
 def ipv4_to_numeric(expr: IntoExpr) -> pl.Expr:
+    """
+    Returns numeric representation (u32) of IPv4 address string
+    """
     expr = parse_into_expr(expr)
     return register_plugin(
         args=[expr],
@@ -46,6 +55,9 @@ def ipv4_to_numeric(expr: IntoExpr) -> pl.Expr:
 
 
 def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
+    """
+    Returns IPv4 address string from its numeric representation
+    """
     expr = parse_into_expr(expr)
     return register_plugin(
         args=[expr],
@@ -55,7 +67,33 @@ def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def is_in(expr: IntoExpr, networks: Union[pl.Expr, List[str]]) -> pl.Expr:
+def is_in(expr: IntoExpr, networks: Union[pl.Expr, List[str], Set[str]]) -> pl.Expr:
+    """
+    Returns a boolean if IPv4 or IPv6 address is in any of the network ranges in "networks"
+
+    Parameters
+    ----------
+    expr
+        The expression or column containing the IP addresses to check
+    networks
+        IPv4 and IPv6 CIDR ranges defining the network. This can be a Polars expression, a list of strings, or a set of strings.
+
+    Examples
+    --------
+    >>> df = pl.DataFrame({'ip': ['8.8.8.8', '1.1.1.1', '2606:4700::1111']})
+    >>> networks = ['8.8.8.0/24', '2606:4700::/32']
+    >>> df.with_columns(ip.is_in(pl.col('ip'), networks).alias('is_in'))
+    shape: (3, 2)
+    ┌─────────────────┬───────┐
+    │ ip              ┆ is_in │
+    │ ---             ┆ ---   │
+    │ str             ┆ bool  │
+    ╞═════════════════╪═══════╡
+    │ 8.8.8.8         ┆ true  │
+    │ 1.1.1.1         ┆ false │
+    │ 2606:4700::1111 ┆ true  │
+    └─────────────────┴───────┘
+    """
     if isinstance(networks, pl.Expr):
         nets = networks.unique().drop_nulls()
     else:

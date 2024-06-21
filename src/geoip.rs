@@ -38,6 +38,7 @@ lazy_static! {
         Reader::open_mmap(&*MMDB_DIR.join("GeoLite2-City.mmdb"));
 }
 
+// helper function to raise PolarsError if we can't read mmdb files
 fn unwrap_reader<'a>(
     reader_result: &'a Result<Reader<Mmap>, MaxMindDBError>,
     reader_name: &'a str,
@@ -55,8 +56,7 @@ fn unwrap_reader<'a>(
     })
 }
 
-// borrowing syntax from github.com/abstractqqq/polars_istr
-// Using Builder seems to be the fastest way.
+// borrowing pattern from github.com/abstractqqq/polars_istr
 fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
     let asnnum = Field::new("asnnum", DataType::UInt32);
     let asnorg = Field::new("asnorg", DataType::String);
@@ -86,6 +86,7 @@ fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
     Ok(Field::new("", DataType::Struct(v)))
 }
 
+// Build struct containing ASN and City level metadata of input IP addresses
 #[polars_expr(output_type_func=geoip_full_output)]
 fn pl_full_geoip(inputs: &[Series]) -> PolarsResult<Series> {
     let asn_reader = unwrap_reader(&ASN_READER, "ASN")?;
@@ -237,6 +238,7 @@ fn pl_full_geoip(inputs: &[Series]) -> PolarsResult<Series> {
     Ok(out.into_series())
 }
 
+// Get ASN and org name for Internet routed IP addresses
 #[polars_expr(output_type=String)]
 fn pl_get_asn(inputs: &[Series]) -> PolarsResult<Series> {
     let asn_reader = unwrap_reader(&ASN_READER, "ASN")?;
