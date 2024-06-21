@@ -1,2 +1,2 @@
-from polars_iptools.geoip import *  # noqa: F403
+import polars_iptools.geoip as geoip
 from polars_iptools.iptools import *  # noqa: F403

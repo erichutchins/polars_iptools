@@ -1,18 +1,45 @@
 #![allow(clippy::unused_unit)]
 use lazy_static::lazy_static;
-use maxminddb::{geoip2, Mmap, Reader};
+use maxminddb::{geoip2, MaxMindDBError, Mmap, Reader};
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
+use std::env;
 use std::fmt::Write;
 use std::net::IpAddr;
+use std::path::{Path, PathBuf};
 
 lazy_static! {
-    static ref ASN_READER: Reader<Mmap> =
-        Reader::open_mmap("/opt/homebrew/var/GeoIP/GeoLite2-ASN.mmdb")
-            .expect("Could not read GeoLite2-ASN.mmdb");
-    static ref CITY_READER: Reader<Mmap> =
-        Reader::open_mmap("/opt/homebrew/var/GeoIP/GeoLite2-City.mmdb")
-            .expect("Could not read GeoLite2-City.mmdb");
+    static ref MMDB_DIR: PathBuf = {
+        let env_path = env::var("MAXMIND_MMDB_DIR").ok();
+        let default_path = Path::new("/opt/homebrew/var/GeoIP");
+
+        env_path.map_or_else(|| default_path.to_path_buf(), PathBuf::from)
+    };
+    // per ChatGPT, use &*MMDB_DIR to dereference MMDB_DIR to a Path.
+    // This is a concise way to convert PathBuf to &Path.
+    // Leaving this as a Result so we can more gracefully raise errors
+    // inside the specific functions
+    static ref ASN_READER: Result<Reader<Mmap>, MaxMindDBError> =
+        Reader::open_mmap(&*MMDB_DIR.join("GeoLite2-ASN.mmdb"));
+    static ref CITY_READER: Result<Reader<Mmap>, MaxMindDBError> =
+        Reader::open_mmap(&*MMDB_DIR.join("GeoLite2-City.mmdb"));
+}
+
+fn unwrap_reader<'a>(
+    reader_result: &'a Result<Reader<Mmap>, MaxMindDBError>,
+    reader_name: &'a str,
+) -> PolarsResult<&'a Reader<Mmap>> {
+    reader_result.as_ref().map_err(|e| {
+        let error_message = format!(
+            "Error loading {} MMDB file from {}\n\
+            Hint: specify a directory containing Maxmind MDDB files with the environment variable MAXMIND_MMDB_DIR\n\
+            {}",
+            reader_name,
+            MMDB_DIR.to_str().unwrap_or_default(),
+            e
+        );
+        PolarsError::ComputeError(error_message.into())
+    })
 }
 
 // borrowing syntax from github.com/abstractqqq/polars_istr
@@ -47,7 +74,10 @@ fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
 }
 
 #[polars_expr(output_type_func=geoip_full_output)]
-fn geoip_lookup_all(inputs: &[Series]) -> PolarsResult<Series> {
+fn pl_full_geoip(inputs: &[Series]) -> PolarsResult<Series> {
+    let asn_reader = unwrap_reader(&ASN_READER, "ASN")?;
+    let city_reader = unwrap_reader(&CITY_READER, "City")?;
+
     let series = &inputs[0];
     let ca: &StringChunked = series.str()?;
 
@@ -81,12 +111,12 @@ fn geoip_lookup_all(inputs: &[Series]) -> PolarsResult<Series> {
                 let mut longitude: f64 = 0.0;
                 let mut timezone: &str = "";
 
-                if let Ok(asnrecord) = ASN_READER.lookup::<geoip2::Asn>(ip) {
+                if let Ok(asnrecord) = asn_reader.lookup::<geoip2::Asn>(ip) {
                     asnnum = asnrecord.autonomous_system_number.unwrap_or(0);
                     asnorg = asnrecord.autonomous_system_organization.unwrap_or("");
                 };
 
-                if let Ok(cityrecord) = CITY_READER.lookup::<geoip2::City>(ip) {
+                if let Ok(cityrecord) = city_reader.lookup::<geoip2::City>(ip) {
                     // from https://github.com/oschwald/maxminddb-rust/blob/main/examples/within.rs
                     continent = cityrecord.continent.and_then(|c| c.code).unwrap_or("");
                     if let Some(c) = cityrecord.country {
@@ -196,19 +226,21 @@ fn geoip_lookup_all(inputs: &[Series]) -> PolarsResult<Series> {
 }
 
 #[polars_expr(output_type=String)]
-fn lookup(inputs: &[Series]) -> PolarsResult<Series> {
+fn pl_get_asn(inputs: &[Series]) -> PolarsResult<Series> {
+    let asn_reader = unwrap_reader(&ASN_READER, "ASN")?;
+
     let ca: &StringChunked = inputs[0].str()?;
     let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
         if let Ok(ip) = value.parse::<IpAddr>() {
             let mut asnnum: u32 = 0;
             let mut asnorg: &str = "";
 
-            if let Ok(asnrecord) = ASN_READER.lookup::<geoip2::Asn>(ip) {
+            if let Ok(asnrecord) = asn_reader.lookup::<geoip2::Asn>(ip) {
                 asnnum = asnrecord.autonomous_system_number.unwrap_or(0);
                 asnorg = asnrecord.autonomous_system_organization.unwrap_or("");
             };
 
-            write!(output, "AS{}_{}", asnnum, asnorg).unwrap()
+            write!(output, "AS{} {}", asnnum, asnorg).unwrap()
         } else {
             // Handle invalid IP address case
             write!(output, "").unwrap()

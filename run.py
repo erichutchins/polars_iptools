@@ -21,6 +21,8 @@ result = df.with_columns(
         ip.is_private("ip").alias("priv"),
         ip.ipv4_to_numeric(pl.col("ip")).alias("numeric"),
         ip.is_in(pl.col("ip"), ["1.1.1.10/16"]).alias("subnet"),
+        ip.geoip.asn(pl.col("ip")).alias("ipasn"),
+        ip.geoip.full(pl.col("ip")).alias("ipfull"),
     ]
 )
 print(result)

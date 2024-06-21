@@ -11,28 +11,28 @@ from polars_iptools.utils import (get_shared_lib_location, parse_into_expr,
                                   register_plugin)
 
 __all__ = [
-    "lookup",
-    "lookup_all",
+    "asn",
+    "full",
 ]
 
 lib = get_shared_lib_location()
 
 
-def lookup(expr: IntoExpr, parallel: bool = False) -> pl.Expr:
+def asn(expr: IntoExpr) -> pl.Expr:
     expr = parse_into_expr(expr)
     return register_plugin(
         args=[expr],
-        symbol="lookup",
+        symbol="pl_get_asn",
         is_elementwise=True,
         lib=lib,
     )
 
 
-def lookup_all(expr: IntoExpr) -> pl.Expr:
+def full(expr: IntoExpr) -> pl.Expr:
     expr = parse_into_expr(expr)
     return register_plugin(
         args=[expr],
-        symbol="geoip_lookup_all",
+        symbol="pl_full_geoip",
         is_elementwise=True,
         lib=lib,
     )
