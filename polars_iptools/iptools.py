@@ -80,6 +80,8 @@ def is_in(expr: IntoExpr, networks: Union[pl.Expr, List[str], Set[str]]) -> pl.E
 
     Examples
     --------
+    >>> import polars as pl
+    >>> import polars_iptools as ip
     >>> df = pl.DataFrame({'ip': ['8.8.8.8', '1.1.1.1', '2606:4700::1111']})
     >>> networks = ['8.8.8.0/24', '2606:4700::/32']
     >>> df.with_columns(ip.is_in(pl.col('ip'), networks).alias('is_in'))
