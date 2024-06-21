@@ -8,12 +8,25 @@ use std::fmt::Write;
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 
+// Lazy load of MMDB files and keep them re-usable for subsequent invocations
 lazy_static! {
     static ref MMDB_DIR: PathBuf = {
-        let env_path = env::var("MAXMIND_MMDB_DIR").ok();
-        let default_path = Path::new("/opt/homebrew/var/GeoIP");
+        // First priority is environment variable
+        if let Ok(env_path) = env::var("MAXMIND_MMDB_DIR") {
+            return PathBuf::from(env_path);
+        }
 
-        env_path.map_or_else(|| default_path.to_path_buf(), PathBuf::from)
+        // Then we try two (Mac/Linux) alternate paths
+        let default_path = Path::new("/usr/local/share/GeoIP");
+        let third_path = Path::new("/opt/homebrew/var/GeoIP");
+
+        // Check if the default path exists and use it if available
+        if default_path.exists() {
+            return default_path.to_path_buf();
+        }
+
+        // Fallback to the third directory path
+        third_path.to_path_buf()
     };
     // per ChatGPT, use &*MMDB_DIR to dereference MMDB_DIR to a Path.
     // This is a concise way to convert PathBuf to &Path.
@@ -78,8 +91,7 @@ fn pl_full_geoip(inputs: &[Series]) -> PolarsResult<Series> {
     let asn_reader = unwrap_reader(&ASN_READER, "ASN")?;
     let city_reader = unwrap_reader(&CITY_READER, "City")?;
 
-    let series = &inputs[0];
-    let ca: &StringChunked = series.str()?;
+    let ca: &StringChunked = inputs[0].str()?;
 
     let mut asnnum_builder: PrimitiveChunkedBuilder<UInt32Type> =
         PrimitiveChunkedBuilder::new("asnnum", ca.len());
@@ -230,20 +242,17 @@ fn pl_get_asn(inputs: &[Series]) -> PolarsResult<Series> {
     let asn_reader = unwrap_reader(&ASN_READER, "ASN")?;
 
     let ca: &StringChunked = inputs[0].str()?;
+
     let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
         if let Ok(ip) = value.parse::<IpAddr>() {
-            let mut asnnum: u32 = 0;
-            let mut asnorg: &str = "";
-
+            // only emit ASN information if we have a) a valid IP and b) it exists
+            // in the asn mmdb. if it's a valid ip but not in the mmdb (e.g. private IPs),
+            // still leave the output blank
             if let Ok(asnrecord) = asn_reader.lookup::<geoip2::Asn>(ip) {
-                asnnum = asnrecord.autonomous_system_number.unwrap_or(0);
-                asnorg = asnrecord.autonomous_system_organization.unwrap_or("");
-            };
-
-            write!(output, "AS{} {}", asnnum, asnorg).unwrap()
-        } else {
-            // Handle invalid IP address case
-            write!(output, "").unwrap()
+                let asnnum = asnrecord.autonomous_system_number.unwrap_or(0);
+                let asnorg = asnrecord.autonomous_system_organization.unwrap_or("");
+                write!(output, "AS{} {}", asnnum, asnorg).unwrap()
+            }
         }
     });
 
