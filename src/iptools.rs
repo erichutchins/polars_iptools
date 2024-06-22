@@ -99,7 +99,7 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
         }
     }
 
-    // Compress the radix tree for faster lookups
+    // Compress the radix trie for faster lookups
     let ipv4_lctrie = ipv4_rtrie.compress();
     let ipv6_lctrie = ipv6_rtrie.compress();
 
