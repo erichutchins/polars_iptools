@@ -31,6 +31,7 @@ def is_valid(expr: IntoExpr) -> pl.Expr:
 def is_private(expr: IntoExpr) -> pl.Expr:
     """
     Returns a boolean if string is an IETF RFC 1918 IPv4 address
+    If input is a IPv6 or an invalid IP, this returns False
     """
     expr = parse_into_expr(expr)
     return register_plugin(
@@ -59,6 +60,8 @@ def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
     Returns IPv4 address string from its numeric representation
     """
     expr = parse_into_expr(expr)
+    # cast to UInt32 and leave any errors as nulls
+    expr = expr.cast(pl.UInt32, strict=False)
     return register_plugin(
         args=[expr],
         symbol="pl_numeric_to_ipv4",
@@ -97,9 +100,14 @@ def is_in(expr: IntoExpr, networks: Union[pl.Expr, List[str], Set[str]]) -> pl.E
     └─────────────────┴───────┘
     """
     if isinstance(networks, pl.Expr):
-        nets = networks.unique().drop_nulls()
+        nets = networks
+    elif isinstance(networks, list):
+        nets = pl.Series(values=networks, dtype=pl.String)
     else:
-        nets = pl.Series(values=networks, dtype=pl.String).unique().drop_nulls()
+        # generic iterable
+        nets = pl.Series(values=[n for n in networks], dtype=pl.String)
+
+    nets = nets.unique().drop_nulls()
 
     expr = parse_into_expr(expr)
     return register_plugin(
