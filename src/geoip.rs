@@ -253,7 +253,11 @@ fn pl_get_asn(inputs: &[Series]) -> PolarsResult<Series> {
             if let Ok(asnrecord) = asn_reader.lookup::<geoip2::Asn>(ip) {
                 let asnnum = asnrecord.autonomous_system_number.unwrap_or(0);
                 let asnorg = asnrecord.autonomous_system_organization.unwrap_or("");
-                write!(output, "AS{} {}", asnnum, asnorg).unwrap()
+                if asnorg.is_empty() {
+                    write!(output, "AS{}", asnnum).unwrap()
+                } else {
+                    write!(output, "AS{} {}", asnnum, asnorg).unwrap()
+                }
             }
         }
     });
