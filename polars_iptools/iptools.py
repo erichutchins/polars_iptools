@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Set, Union
-
+from typing import TYPE_CHECKING, Union
+from collections.abc import Iterable
 import polars as pl
 
 if TYPE_CHECKING:
@@ -73,7 +73,7 @@ def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
     )
 
 
-def is_in(expr: IntoExpr, networks: Union[pl.Expr, List[str], Set[str]]) -> pl.Expr:
+def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
     """
     Returns a boolean if IPv4 or IPv6 address is in any of the network ranges in "networks"
 
@@ -104,11 +104,11 @@ def is_in(expr: IntoExpr, networks: Union[pl.Expr, List[str], Set[str]]) -> pl.E
     """
     if isinstance(networks, pl.Expr):
         nets = networks
-    elif isinstance(networks, list):
-        nets = pl.Series(values=networks, dtype=pl.String)
+    elif isinstance(networks, Iterable) and not isinstance(networks, str):
+        nets = pl.lit(pl.Series(values=list(networks), dtype=pl.Utf8))
     else:
         # generic iterable
-        nets = pl.Series(values=[n for n in networks], dtype=pl.String)
+        raise TypeError("networks must be a polars Expr or an iterable of strings")
 
     nets = nets.unique().drop_nulls()
 
