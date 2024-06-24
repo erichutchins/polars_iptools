@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 pyo3 = { version = "0.21.2", features = ["extension-module", "abi3-py38"] }
 pyo3-polars = { version = "0.15.0", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
-polars = { version = "0.41.0", features = [
+polars = { version = "0.41.1", features = [
     "dtype-struct",
 ], default-features = false }
 maxminddb = { version = "0.24.0", features = ["mmap"] }
@@ -26,3 +26,4 @@ jemallocator = { version = "0.5", features = ["disable_initial_exec_tls"] }
 codegen-units = 1
 strip = "symbols"
 lto = "fat"
+opt-level = 3
