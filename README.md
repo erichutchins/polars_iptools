@@ -1,6 +1,12 @@
-# Polars GeoIP
+# Polars IPTools
 
-Polars IP Tools is a Rust-based extension to accelerates IP address manipulation and enrichment in Polars dataframes. This library includes various utility functions for working with IPv4 and IPv6 addresses and geoip enrichment using MaxMind databases.
+Polars IPTools is a Rust-based extension to accelerates IP address manipulation and enrichment in Polars dataframes. This library includes various utility functions for working with IPv4 and IPv6 addresses and geoip enrichment using MaxMind databases.
+
+## Install
+
+```shell
+pip install polars-iptools
+```
 
 ## Examples
 
