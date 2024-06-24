@@ -7,8 +7,11 @@ import polars as pl
 if TYPE_CHECKING:
     from polars.type_aliases import IntoExpr
 
-from polars_iptools.utils import (get_shared_lib_location, parse_into_expr,
-                                  register_plugin)
+from polars_iptools.utils import (
+    get_shared_lib_location,
+    parse_into_expr,
+    register_plugin,
+)
 
 __all__ = ["is_valid", "is_private", "ipv4_to_numeric", "numeric_to_ipv4", "is_in"]
 

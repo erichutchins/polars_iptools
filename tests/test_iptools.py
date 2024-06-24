@@ -178,4 +178,4 @@ def test_is_in_invalid_network():
     df = pl.DataFrame({"ip": ips})
 
     with pytest.raises(pl.exceptions.ComputeError, match="Invalid CIDR range"):
-        result = df.with_columns(result=ip.is_in("ip", networks))
+        _ = df.with_columns(result=ip.is_in("ip", networks))
