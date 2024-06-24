@@ -41,26 +41,24 @@ def test_asn_lookup():
 
 
 def test_full_geoip_lookup():
-    schema = pl.Schema(
-        {
-            "ip": pl.String,
-            "result": pl.Struct(
-                {
-                    "asnnum": pl.UInt32,
-                    "asnorg": pl.String,
-                    "city": pl.String,
-                    "continent": pl.String,
-                    "subdivision_iso": pl.String,
-                    "subdivision": pl.String,
-                    "country_iso": pl.String,
-                    "country": pl.String,
-                    "latitude": pl.Float64,
-                    "longitude": pl.Float64,
-                    "timezone": pl.String,
-                }
-            ),
-        }
-    )
+    schema = {
+        "ip": pl.Utf8,
+        "result": pl.Struct(
+            [
+                pl.Field("asnnum", pl.UInt32),
+                pl.Field("asnorg", pl.Utf8),
+                pl.Field("city", pl.Utf8),
+                pl.Field("continent", pl.Utf8),
+                pl.Field("subdivision_iso", pl.Utf8),
+                pl.Field("subdivision", pl.Utf8),
+                pl.Field("country_iso", pl.Utf8),
+                pl.Field("country", pl.Utf8),
+                pl.Field("latitude", pl.Float64),
+                pl.Field("longitude", pl.Float64),
+                pl.Field("timezone", pl.Utf8),
+            ]
+        ),
+    }
 
     ips = ["67.43.156.1", "240b::beef:0:24"]
 
