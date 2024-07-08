@@ -107,3 +107,43 @@ def full(expr: IntoExpr) -> pl.Expr:
         is_elementwise=True,
         lib=lib,
     )
+
+
+@pl.api.register_expr_namespace("geoip")
+class GeoIpExprExt:
+    """
+    This class contains tools for geolocation enrichment of IP addresses.
+
+    Polars Namespace: geoip
+
+    Example: df.with_columns([pl.col("srcip").geoip.asn()])
+    """
+
+    def __init__(self, expr: pl.Expr):
+        self._expr: pl.Expr = expr
+
+    def asn(self) -> pl.Expr:
+        return asn(self._expr)
+
+    def full(self) -> pl.Expr:
+        return full(self._expr)
+
+
+@pl.api.register_series_namespace("geoip")
+class GeoIpSeriesExt:
+    """
+    This class contains tools for parsing IP addresses.
+
+    Polars Namespace: geoip
+
+    Example: df["srcip"].geoip.asn()
+    """
+
+    def __init__(self, s: pl.Series):
+        self._s: pl.Series = s
+
+    def asn(self) -> pl.Series:
+        return pl.select(asn(self._s)).to_series()
+
+    def full(self) -> pl.Series:
+        return pl.select(full(self._s)).to_series()

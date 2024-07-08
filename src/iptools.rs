@@ -9,9 +9,7 @@ use std::str::FromStr;
 /// Returns true if this is a valid IPv4 or IPv6 address
 #[polars_expr(output_type=Boolean)]
 fn pl_is_valid(inputs: &[Series]) -> PolarsResult<Series> {
-    let s = &inputs[0];
-    let ca = s.str()?;
-
+    let ca: &StringChunked = inputs[0].str()?;
     let out: BooleanChunked =
         ca.apply_nonnull_values_generic(DataType::Boolean, |x| IpAddr::from_str(x).is_ok());
     Ok(out.into_series())
@@ -20,9 +18,7 @@ fn pl_is_valid(inputs: &[Series]) -> PolarsResult<Series> {
 /// Returns true if this is a private IPv4 address defined in IETF RFC 1918
 #[polars_expr(output_type=Boolean)]
 fn pl_is_private(inputs: &[Series]) -> PolarsResult<Series> {
-    let s = &inputs[0];
-    let ca = s.str()?;
-
+    let ca: &StringChunked = inputs[0].str()?;
     let out: BooleanChunked =
         ca.apply_nonnull_values_generic(DataType::Boolean, |x| match Ipv4Addr::from_str(x) {
             Ok(ip) => ip.is_private(),
@@ -76,8 +72,8 @@ fn pl_numeric_to_ipv4(inputs: &[Series]) -> PolarsResult<Series> {
 /// Check if IP addresses present in a series of CIDR ranges/prefixes
 #[polars_expr(output_type=Boolean)]
 fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
-    let ca1 = inputs[0].str()?; // ip addresses to lookup
-    let ca2 = inputs[1].str()?; // ip networks/cidrs
+    let ca1: &StringChunked = inputs[0].str()?; // ip addresses to lookup
+    let ca2: &StringChunked = inputs[1].str()?; // ip networks/cidrs
 
     let mut ipv4_rtrie: RTrieSet<Ipv4Net> = RTrieSet::with_capacity(ca2.len());
     let mut ipv6_rtrie: RTrieSet<Ipv6Net> = RTrieSet::new();
