@@ -21,7 +21,7 @@ __all__ = [
 lib = get_shared_lib_location()
 
 
-def asn(expr: IntoExpr) -> pl.Expr:
+def asn(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     """
     Retrieve ASN and Organizational names for Internet-routed IPv4 and IPv6 addresses
     Returns a string in the format "AS{asnum} {asorg}"
@@ -50,12 +50,15 @@ def asn(expr: IntoExpr) -> pl.Expr:
     return register_plugin(
         args=[expr],
         symbol="pl_get_asn",
+        kwargs={
+            "reload_mmdb": reload_mmdb,
+        },
         is_elementwise=True,
         lib=lib,
     )
 
 
-def full(expr: IntoExpr) -> pl.Expr:
+def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     """
     Retrieve full ASN and City geolocation metadata of IPv4 and IPv6 addresses
     Returns a struct containing the following fields:
@@ -104,6 +107,9 @@ def full(expr: IntoExpr) -> pl.Expr:
     return register_plugin(
         args=[expr],
         symbol="pl_full_geoip",
+        kwargs={
+            "reload_mmdb": reload_mmdb,
+        },
         is_elementwise=True,
         lib=lib,
     )
@@ -122,11 +128,11 @@ class GeoIpExprExt:
     def __init__(self, expr: pl.Expr):
         self._expr: pl.Expr = expr
 
-    def asn(self) -> pl.Expr:
-        return asn(self._expr)
+    def asn(self, reload_mmdb: bool = False) -> pl.Expr:
+        return asn(self._expr, reload_mmdb=reload_mmdb)
 
-    def full(self) -> pl.Expr:
-        return full(self._expr)
+    def full(self, reload_mmdb: bool = False) -> pl.Expr:
+        return full(self._expr, reload_mmdb=reload_mmdb)
 
 
 @pl.api.register_series_namespace("geoip")
@@ -142,8 +148,8 @@ class GeoIpSeriesExt:
     def __init__(self, s: pl.Series):
         self._s: pl.Series = s
 
-    def asn(self) -> pl.Series:
-        return pl.select(asn(self._s)).to_series()
+    def asn(self, reload_mmdb: bool = False) -> pl.Series:
+        return pl.select(asn(self._s, reload_mmdb=reload_mmdb)).to_series()
 
-    def full(self) -> pl.Series:
-        return pl.select(full(self._s)).to_series()
+    def full(self, reload_mmdb: bool = False) -> pl.Series:
+        return pl.select(full(self._s, reload_mmdb=reload_mmdb)).to_series()
