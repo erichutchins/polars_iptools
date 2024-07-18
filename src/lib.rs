@@ -1,5 +1,6 @@
 mod geoip;
 mod iptools;
+mod maxmind;
 mod utils;
 
 #[cfg(target_os = "linux")]
