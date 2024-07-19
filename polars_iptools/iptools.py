@@ -132,6 +132,7 @@ class IpExprExt:
     Example: df.with_columns([pl.col("srcip").ip.is_private()])
     """
 
+    # noqa: D102
     def __init__(self, expr: pl.Expr):
         self._expr: pl.Expr = expr
 
@@ -161,6 +162,7 @@ class IpSeriesExt:
     Example: df["srcip"].ip.is_private()
     """
 
+    # noqa: D102
     def __init__(self, s: pl.Series):
         self._s: pl.Series = s
 
