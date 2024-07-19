@@ -8,18 +8,22 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-// Mutex implementation and error handling improvements provided by ChatGPT on 20240717 using GPT-4o
+// Mutex implementation and error handling improvements provided
+// by ChatGPT on 20240717 using GPT-4o
+// This instantiates a lazily loaded global connection to MaxMind
+// mmdb database files for re-use
 lazy_static! {
     pub static ref MAXMIND_DB: Mutex<Option<Result<MaxMindDB, PolarsError>>> = Mutex::new(None);
 }
 
+/// Object to hold connections to ASN and City MaxMind MMDB readers
 #[derive(Debug)]
 pub struct MaxMindDB {
     asn_reader: Reader<Mmap>,
     city_reader: Reader<Mmap>,
 }
 
-/// kwargs struct for expression params
+/// Kwargs struct for Polars expression params
 #[derive(Deserialize)]
 pub struct GeoIPKwargs {
     // geoip expressions should first reload/reinitialize mmdb files
@@ -27,19 +31,23 @@ pub struct GeoIPKwargs {
     pub reload_mmdb: bool,
 }
 
+/// Helper function to locate the MaxMind MMDB directory on the system
+/// deferring foremost to the environment variable MAXMIND_MMDB_DIR and
+/// then checking two other popular locations (for Mac/Linux systems).
+/// Windows clients will have to use the env variable
 fn get_mmdb_dir() -> Result<PathBuf, io::Error> {
     // First priority is environment variable
     if let Ok(env_path) = env::var("MAXMIND_MMDB_DIR") {
         return Ok(PathBuf::from(env_path));
     }
 
-    // List of default paths
+    // List of default paths (on Mac/Linux, at least)
     let default_paths = [
         Path::new("/usr/local/share/GeoIP"),
         Path::new("/opt/homebrew/var/GeoIP"),
     ];
 
-    // Check each default path
+    // Check each default path in order
     for path in &default_paths {
         if path.exists() {
             return Ok(path.to_path_buf());
@@ -54,6 +62,10 @@ fn get_mmdb_dir() -> Result<PathBuf, io::Error> {
 }
 
 impl MaxMindDB {
+    /// Initialize the lookup readers by locating directory containing
+    /// MaxMind mmdb files and opening ASN and City readers. If directories are not
+    /// found or mmdb files could not be opened, raise a PolarsCompute
+    /// error so it propagates back up to the python user
     fn initialize() -> PolarsResult<Self> {
         let mmdb_dir_result = get_mmdb_dir();
 
@@ -93,15 +105,22 @@ impl MaxMindDB {
         })
     }
 
+    /// Force a reinitialization of the MMDB readers by dropping
+    /// the existing global reader and invoking initialize() again.
+    /// This is helpful, particularly in an interactive session (e.g., Jupyter)
+    /// and the user has changed MAXMIND_MMDB_DIR setting or updated
+    /// the MaxMind mmdb files themselves
     pub fn reload() -> PolarsResult<()> {
         let mut db = MAXMIND_DB.lock().unwrap();
         *db = Some(Self::initialize());
         Ok(())
     }
 
-    /// Thank you ChatGPT
+    /// Modeling OnceLock's get_or_init, gets the global mmdb reader,
+    /// initializing it first if necessary
     pub fn get_or_init(
     ) -> PolarsResult<std::sync::MutexGuard<'static, Option<Result<Self, PolarsError>>>> {
+        // Credit to GPT-4o for writing this method on 20240717
         let mut db = MAXMIND_DB.lock().unwrap();
         if db.is_none() {
             *db = Some(Self::initialize());

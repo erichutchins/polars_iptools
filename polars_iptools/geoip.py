@@ -26,6 +26,18 @@ def asn(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     Retrieve ASN and Organizational names for Internet-routed IPv4 and IPv6 addresses
     Returns a string in the format "AS{asnum} {asorg}"
 
+    Parameters
+    ----------
+    expr
+        The expression or column containing IP addresses.
+    reload_mmdb : bool, optional
+        Force reload/reinitialize of MaxMind db readers. Default is False.
+
+    Returns
+    -------
+    pl.Expr
+        Expression of :class:`Utf8` strings
+
     Example
     -------
     >>> import polars as pl
@@ -45,6 +57,9 @@ def asn(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     │ 2606:4700::1111 ┆ AS13335 CLOUDFLARENET │
     │ 999.abc.def.123 ┆                       │
     └─────────────────┴───────────────────────┘
+    Notes
+    -----
+    - Invalid IP address strings or IPs not found in the database will result in an empty string output.
     """
     expr = parse_into_expr(expr)
     return register_plugin(
@@ -61,19 +76,29 @@ def asn(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
 def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     """
     Retrieve full ASN and City geolocation metadata of IPv4 and IPv6 addresses
-    Returns a struct containing the following fields:
 
-    asnnum
-    asnorg
-    city
-    continent
-    country
-    country_iso
-    latitude
-    longitude
-    subdivision
-    subdivision_iso
-    timezone
+    Parameters
+    ----------
+    expr
+        The expression or column containing IP addresses.
+    reload_mmdb : bool, optional
+        Force reload/reinitialize of MaxMind db readers. Default is False.
+
+    Returns
+    -------
+    pl.Expr
+        An expression that returns a struct containing the following fields:
+        - asnnum : UInt32
+        - asnorg : String
+        - city : String
+        - continent : String
+        - country : String
+        - country_iso : String
+        - latitude : Float64
+        - longitude : Float64
+        - subdivision : String
+        - subdivision_iso : String
+        - timezone : String
 
     Example
     -------
@@ -102,6 +127,9 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
              'continent': String, 'subdivision_iso': String, 'subdivision': String,
              'country_iso': String, 'country': String, 'latitude': Float64,
              'longitude': Float64, 'timezone': String}))])
+    Notes
+    -----
+    - IP addresses that are invalid or not found in the database will result in `null` values in the respective fields.
     """
     expr = parse_into_expr(expr)
     return register_plugin(
@@ -125,6 +153,7 @@ class GeoIpExprExt:
     Example: df.with_columns([pl.col("srcip").geoip.asn()])
     """
 
+    # noqa: D102
     def __init__(self, expr: pl.Expr):
         self._expr: pl.Expr = expr
 
@@ -145,6 +174,7 @@ class GeoIpSeriesExt:
     Example: df["srcip"].geoip.asn()
     """
 
+    # noqa: D102
     def __init__(self, s: pl.Series):
         self._s: pl.Series = s
 
