@@ -88,9 +88,7 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
                 _ = ipv6_rtrie.insert(ipv6);
             }
             Err(_) => {
-                return Err(PolarsError::ComputeError(
-                    format!("Invalid CIDR range: {}", cidr).into(),
-                ));
+                polars_bail!(InvalidOperation: "Invalid CIDR range: {}", cidr);
             }
         }
     }
