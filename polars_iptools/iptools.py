@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
 from collections.abc import Iterable
+from typing import TYPE_CHECKING, Union
+
 import polars as pl
 
 if TYPE_CHECKING:
@@ -121,5 +122,61 @@ def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
     )
 
 
-# todo: mimic this url namespace
-# https://github.com/abstractqqq/polars_istr/blob/main/python/polars_istr/url.py#L105
+@pl.api.register_expr_namespace("ip")
+class IpExprExt:
+    """
+    This class contains tools for parsing IP addresses.
+
+    Polars Namespace: ip
+
+    Example: df.with_columns([pl.col("srcip").ip.is_private()])
+    """
+
+    # noqa: D102
+    def __init__(self, expr: pl.Expr):
+        self._expr: pl.Expr = expr
+
+    def is_valid(self) -> pl.Expr:
+        return is_valid(self._expr)
+
+    def is_private(self) -> pl.Expr:
+        return is_private(self._expr)
+
+    def ipv4_to_numeric(self) -> pl.Expr:
+        return ipv4_to_numeric(self._expr)
+
+    def numeric_to_ipv4(self) -> pl.Expr:
+        return numeric_to_ipv4(self._expr)
+
+    def is_in(self, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
+        return is_in(self._expr, networks)
+
+
+@pl.api.register_series_namespace("ip")
+class IpSeriesExt:
+    """
+    This class contains tools for parsing IP addresses.
+
+    Polars Namespace: ip
+
+    Example: df["srcip"].ip.is_private()
+    """
+
+    # noqa: D102
+    def __init__(self, s: pl.Series):
+        self._s: pl.Series = s
+
+    def is_valid(self) -> pl.Series:
+        return pl.select(is_valid(self._s)).to_series()
+
+    def is_private(self) -> pl.Series:
+        return pl.select(is_private(self._s)).to_series()
+
+    def ipv4_to_numeric(self) -> pl.Series:
+        return pl.select(ipv4_to_numeric(self._s)).to_series()
+
+    def numeric_to_ipv4(self) -> pl.Series:
+        return pl.select(numeric_to_ipv4(self._s)).to_series()
+
+    def is_in(self, networks: Union[pl.Expr, Iterable[str]]) -> pl.Series:
+        return pl.select(is_in(self._s, networks)).to_series()

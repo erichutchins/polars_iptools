@@ -1,60 +1,11 @@
 #![allow(clippy::unused_unit)]
-use lazy_static::lazy_static;
-use maxminddb::{geoip2, MaxMindDBError, Mmap, Reader};
+use maxminddb::geoip2;
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
-use std::env;
 use std::fmt::Write;
 use std::net::IpAddr;
-use std::path::{Path, PathBuf};
 
-// Lazy load of MMDB files and keep them re-usable for subsequent invocations
-lazy_static! {
-    static ref MMDB_DIR: PathBuf = {
-        // First priority is environment variable
-        if let Ok(env_path) = env::var("MAXMIND_MMDB_DIR") {
-            return PathBuf::from(env_path);
-        }
-
-        // Then we try two (Mac/Linux) alternate paths
-        let default_path = Path::new("/usr/local/share/GeoIP");
-        let third_path = Path::new("/opt/homebrew/var/GeoIP");
-
-        // Check if the default path exists and use it if available
-        if default_path.exists() {
-            return default_path.to_path_buf();
-        }
-
-        // Fallback to the third directory path
-        third_path.to_path_buf()
-    };
-    // per ChatGPT, use &*MMDB_DIR to dereference MMDB_DIR to a Path.
-    // This is a concise way to convert PathBuf to &Path.
-    // Leaving this as a Result so we can more gracefully raise errors
-    // inside the specific functions
-    static ref ASN_READER: Result<Reader<Mmap>, MaxMindDBError> =
-        Reader::open_mmap(&*MMDB_DIR.join("GeoLite2-ASN.mmdb"));
-    static ref CITY_READER: Result<Reader<Mmap>, MaxMindDBError> =
-        Reader::open_mmap(&*MMDB_DIR.join("GeoLite2-City.mmdb"));
-}
-
-// helper function to raise PolarsError if we can't read mmdb files
-fn unwrap_reader<'a>(
-    reader_result: &'a Result<Reader<Mmap>, MaxMindDBError>,
-    reader_name: &'a str,
-) -> PolarsResult<&'a Reader<Mmap>> {
-    reader_result.as_ref().map_err(|e| {
-        let error_message = format!(
-            "Error loading {} MMDB file from {}\n\
-            Hint: specify a directory containing Maxmind MDDB files with the environment variable MAXMIND_MMDB_DIR\n\
-            {}",
-            reader_name,
-            MMDB_DIR.to_str().unwrap_or_default(),
-            e
-        );
-        PolarsError::ComputeError(error_message.into())
-    })
-}
+use crate::maxmind::{GeoIPKwargs, MaxMindDB};
 
 // borrowing pattern from github.com/abstractqqq/polars_istr
 fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
@@ -88,9 +39,22 @@ fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
 
 // Build struct containing ASN and City level metadata of input IP addresses
 #[polars_expr(output_type_func=geoip_full_output)]
-fn pl_full_geoip(inputs: &[Series]) -> PolarsResult<Series> {
-    let asn_reader = unwrap_reader(&ASN_READER, "ASN")?;
-    let city_reader = unwrap_reader(&CITY_READER, "City")?;
+fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series> {
+    if kwargs.reload_mmdb {
+        MaxMindDB::reload()?;
+    }
+
+    let binding = MaxMindDB::get_or_init()?;
+    let mdb = binding
+            .as_ref()
+            .ok_or_else(|| PolarsError::ComputeError("Error: MaxMindDB is not initialized. Please ensure that the MMDB files are correctly placed and accessible.".into()))?
+            .as_ref()
+            .map_err(|e| {
+                PolarsError::ComputeError(format!("Failed to initialize MaxMindDB: {}", e).into())
+            })?;
+
+    let asn_reader = mdb.asn_reader();
+    let city_reader = mdb.city_reader();
 
     let ca: &StringChunked = inputs[0].str()?;
 
@@ -240,8 +204,21 @@ fn pl_full_geoip(inputs: &[Series]) -> PolarsResult<Series> {
 
 // Get ASN and org name for Internet routed IP addresses
 #[polars_expr(output_type=String)]
-fn pl_get_asn(inputs: &[Series]) -> PolarsResult<Series> {
-    let asn_reader = unwrap_reader(&ASN_READER, "ASN")?;
+fn pl_get_asn(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series> {
+    if kwargs.reload_mmdb {
+        MaxMindDB::reload()?;
+    }
+
+    let binding = MaxMindDB::get_or_init()?;
+    let mdb = binding
+        .as_ref()
+        .ok_or_else(|| PolarsError::ComputeError("MaxMindDB is not initialized".into()))?
+        .as_ref()
+        .map_err(|_| {
+            PolarsError::ComputeError("Failed to initialize MaxMindDB in map_err closure".into())
+        })?;
+
+    let asn_reader = mdb.asn_reader();
 
     let ca: &StringChunked = inputs[0].str()?;
 
