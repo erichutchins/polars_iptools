@@ -14,9 +14,25 @@ from polars_iptools.utils import (
     register_plugin,
 )
 
-__all__ = ["is_valid", "is_private", "ipv4_to_numeric", "numeric_to_ipv4", "is_in"]
+__all__ = [
+    "is_valid",
+    "is_private",
+    "ipv4_to_numeric",
+    "numeric_to_ipv4",
+    "is_in",
+    "extract_all_ips",
+]
 
 lib = get_shared_lib_location()
+
+
+# from https://github.com/erichutchins/geoipsed which also uses rust regex crate
+IPV4_PATT = (
+    r"""((?:(?:\d|[01]?\d\d|2[0-4]\d|25[0-5])\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d|\d))"""
+)
+IPV6_PATT = r"""((?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,4}:[^\s:](?:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9]).){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])))|(?:::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:](?:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9]).){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])))|(?:fe80:(?::(?:(?:[0-9a-fA-F]){1,4})){0,4}%[0-9a-zA-Z]{1,})|(?::(?:(?::(?:(?:[0-9a-fA-F]){1,4})){1,7}|:))|(?:(?:(?:[0-9a-fA-F]){1,4}):(?:(?::(?:(?:[0-9a-fA-F]){1,4})){1,6}))|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,2}(?::(?:(?:[0-9a-fA-F]){1,4})){1,5})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,3}(?::(?:(?:[0-9a-fA-F]){1,4})){1,4})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,4}(?::(?:(?:[0-9a-fA-F]){1,4})){1,3})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,5}(?::(?:(?:[0-9a-fA-F]){1,4})){1,2})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,6}:(?:(?:[0-9a-fA-F]){1,4}))|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,7}:)|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){7,7}(?:(?:[0-9a-fA-F]){1,4})))"""
+
+ALL_IP_PATT = IPV4_PATT + "|" + IPV6_PATT
 
 
 def is_valid(expr: IntoExpr) -> pl.Expr:
@@ -74,6 +90,60 @@ def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
     )
 
 
+def extract_all_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
+    """
+    Extract all IP addresses (convience wrapper for str.extract_all)
+
+    Note: this is purely a regex match and not a semantic validation of
+    the string as a true IP address. A common pitfall, for example, is the
+    version string in a browser useragent, as shown below.
+
+    Parameters
+    ----------
+    expr
+        The expression or column containing string to extract IP addresses
+    ipv6: bool
+        If true, look for both ipv4 and ipv6 candidate strings
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import polars_iptools as ip
+    >>>
+    >>> df = pl.DataFrame(
+    ...     {
+    ...         "log": [
+    ...             'test: 8.8.8.8, "180.179.174.219" 1.2.3.4.5',
+    ...             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3",
+    ...         ]
+    ...     }
+    ... )
+    >>>
+    >>> with pl.Config(fmt_str_lengths=100):
+    ...     print(df.with_columns(ip.extract_all_ips(pl.col("log")).alias("ips")))
+    shape: (2, 2)
+    ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────┐
+    │ log                                                                                                   ┆ ips                                       │
+    │ ---                                                                                                   ┆ ---                                       │
+    │ str                                                                                                   ┆ list[str]                                 │
+    ╞═══════════════════════════════════════════════════════════════════════════════════════════════════════╪═══════════════════════════════════════════╡
+    │ test: 8.8.8.8, "180.179.174.219" 1.2.3.4.5                                                            ┆ ["8.8.8.8", "180.179.174.219", "1.2.3.4"] │
+    │ Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Sa… ┆ ["120.0.0.0"]                             │
+    └───────────────────────────────────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────┘
+
+    Returns
+    -------
+    Expr
+        Expression of data type `List(String)`.
+    """
+
+    expr = parse_into_expr(expr)
+    if ipv6:
+        return expr.str.extract_all(IPV4_PATT)
+    else:
+        return expr.str.extract_all(ALL_IP_PATT)
+
+
 def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
     """
     Returns a boolean if IPv4 or IPv6 address is in any of the network ranges in "networks"
@@ -89,9 +159,9 @@ def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
     --------
     >>> import polars as pl
     >>> import polars_iptools as ip
-    >>> df = pl.DataFrame({'ip': ['8.8.8.8', '1.1.1.1', '2606:4700::1111']})
-    >>> networks = ['8.8.8.0/24', '2606:4700::/32']
-    >>> df.with_columns(ip.is_in(pl.col('ip'), networks).alias('is_in'))
+    >>> df = pl.DataFrame({"ip": ["8.8.8.8", "1.1.1.1", "2606:4700::1111"]})
+    >>> networks = ["8.8.8.0/24", "2606:4700::/32"]
+    >>> df.with_columns(ip.is_in(pl.col("ip"), networks).alias("is_in"))
     shape: (3, 2)
     ┌─────────────────┬───────┐
     │ ip              ┆ is_in │
@@ -148,6 +218,9 @@ class IpExprExt:
     def numeric_to_ipv4(self) -> pl.Expr:
         return numeric_to_ipv4(self._expr)
 
+    def extract_all_ips(self, ipv6: bool = False) -> pl.Expr:
+        return extract_all_ips(self._expr, ipv6)
+
     def is_in(self, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
         return is_in(self._expr, networks)
 
@@ -177,6 +250,9 @@ class IpSeriesExt:
 
     def numeric_to_ipv4(self) -> pl.Series:
         return pl.select(numeric_to_ipv4(self._s)).to_series()
+
+    def extract_all_ips(self, ipv6: bool = False) -> pl.Series:
+        return pl.select(extract_all_ips(self._s, ipv6)).to_series()
 
     def is_in(self, networks: Union[pl.Expr, Iterable[str]]) -> pl.Series:
         return pl.select(is_in(self._s, networks)).to_series()
