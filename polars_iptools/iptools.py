@@ -139,9 +139,9 @@ def extract_all_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
 
     expr = parse_into_expr(expr)
     if ipv6:
-        return expr.str.extract_all(IPV4_PATT)
-    else:
         return expr.str.extract_all(ALL_IP_PATT)
+    else:
+        return expr.str.extract_all(IPV4_PATT)
 
 
 def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
