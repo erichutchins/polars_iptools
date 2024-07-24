@@ -179,3 +179,94 @@ def test_is_in_invalid_network():
 
     with pytest.raises(pl.exceptions.ComputeError, match="Invalid CIDR range"):
         _ = df.with_columns(result=ip.is_in("ip", networks))
+
+
+def test_extract_ipv4():
+    """
+    test extracting ipv4-like strings
+    """
+    text = [
+        "255.255.255.255",
+        '{"json":"8.8.8.8"}',
+        "X-Forwarded-For: 203.0.113.195, 70.41.3.18, 150.172.238.178",
+        "X-Forwarded-For: 203.0.113.195:41237, 198.51.100.100:38523",
+    ]
+
+    df = pl.DataFrame({"text": text})
+    result = df.with_columns(result=ip.extract_all_ips("text"))
+
+    expected_df = pl.DataFrame(
+        {
+            "text": text,
+            "result": [
+                ["255.255.255.255"],
+                ["8.8.8.8"],
+                ["203.0.113.195", "70.41.3.18", "150.172.238.178"],
+                ["203.0.113.195", "198.51.100.100"],
+            ],
+        }
+    )
+
+    assert_frame_equal(result, expected_df)
+
+
+def test_extract_ipv4_and_ipv6():
+    """
+    this is the same test as before but with ipv6 regex enabled.
+    should still get the same results
+    """
+    text = [
+        "255.255.255.255",
+        '{"json":"8.8.8.8"}',
+        "X-Forwarded-For: 203.0.113.195, 70.41.3.18, 150.172.238.178",
+        "X-Forwarded-For: 203.0.113.195:41237, 198.51.100.100:38523",
+    ]
+
+    df = pl.DataFrame({"text": text})
+    result = df.with_columns(result=ip.extract_all_ips("text", ipv6=True))
+
+    expected_df = pl.DataFrame(
+        {
+            "text": text,
+            "result": [
+                ["255.255.255.255"],
+                ["8.8.8.8"],
+                ["203.0.113.195", "70.41.3.18", "150.172.238.178"],
+                ["203.0.113.195", "198.51.100.100"],
+            ],
+        }
+    )
+
+    assert_frame_equal(result, expected_df)
+
+
+def test_extract_ipv4_and_ipv6_with_ipv6():
+    """
+    now actually with ipv6
+    """
+    # XFF examples from https://en.wikipedia.org/wiki/X-Forwarded-For
+    text = [
+        "::1",
+        '{"json":"8.8.8.8"}',
+        "X-Forwarded-For: [2001:db8::1a2b:3c4d]:41237, 198.51.100.100:26321",
+        "X-Forwarded-For: 2001:db8:85a3:8d3:1319:8a2e:370:7348",
+        'Forwarded: for="[2001:db8::1234]"',
+    ]
+
+    df = pl.DataFrame({"text": text})
+    result = df.with_columns(result=ip.extract_all_ips("text", ipv6=True))
+
+    expected_df = pl.DataFrame(
+        {
+            "text": text,
+            "result": [
+                ["::1"],
+                ["8.8.8.8"],
+                ["2001:db8::1a2b:3c4d", "198.51.100.100"],
+                ["2001:db8:85a3:8d3:1319:8a2e:370:7348"],
+                ["2001:db8::1234"],
+            ],
+        }
+    )
+
+    assert_frame_equal(result, expected_df)
