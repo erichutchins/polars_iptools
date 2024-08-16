@@ -1,24 +1,21 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import polars as pl
+from polars.plugins import register_plugin_function
 
 if TYPE_CHECKING:
-    from polars.type_aliases import IntoExpr
+    from polars_iptools.typing import IntoExpr
 
-from polars_iptools.utils import (
-    get_shared_lib_location,
-    parse_into_expr,
-    register_plugin,
-)
+LIB = Path(__file__).parent
+
 
 __all__ = [
     "asn",
     "full",
 ]
-
-lib = get_shared_lib_location()
 
 
 def asn(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
@@ -61,15 +58,14 @@ def asn(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     -----
     - Invalid IP address strings or IPs not found in the database will result in an empty string output.
     """
-    expr = parse_into_expr(expr)
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        symbol="pl_get_asn",
+        plugin_path=LIB,
+        function_name="pl_get_asn",
         kwargs={
             "reload_mmdb": reload_mmdb,
         },
         is_elementwise=True,
-        lib=lib,
     )
 
 
@@ -131,15 +127,14 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     -----
     - IP addresses that are invalid or not found in the database will result in `null` values in the respective fields.
     """
-    expr = parse_into_expr(expr)
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        symbol="pl_full_geoip",
+        plugin_path=LIB,
+        function_name="pl_full_geoip",
         kwargs={
             "reload_mmdb": reload_mmdb,
         },
         is_elementwise=True,
-        lib=lib,
     )
 
 

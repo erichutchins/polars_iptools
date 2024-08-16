@@ -1,18 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 import polars as pl
+from polars.plugins import register_plugin_function
 
 if TYPE_CHECKING:
-    from polars.type_aliases import IntoExpr
+    from polars_iptools.typing import IntoExpr
 
-from polars_iptools.utils import (
-    get_shared_lib_location,
-    parse_into_expr,
-    register_plugin,
-)
+LIB = Path(__file__).parent
 
 __all__ = [
     "is_valid",
@@ -22,8 +20,6 @@ __all__ = [
     "is_in",
     "extract_all_ips",
 ]
-
-lib = get_shared_lib_location()
 
 
 # from https://github.com/erichutchins/geoipsed which also uses rust regex crate
@@ -39,12 +35,11 @@ def is_valid(expr: IntoExpr) -> pl.Expr:
     """
     Returns a boolean if string is a valid IPv4 or IPv6 address
     """
-    expr = parse_into_expr(expr)
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        symbol="pl_is_valid",
+        plugin_path=LIB,
+        function_name="pl_is_valid",
         is_elementwise=True,
-        lib=lib,
     )
 
 
@@ -53,12 +48,11 @@ def is_private(expr: IntoExpr) -> pl.Expr:
     Returns a boolean if string is an IETF RFC 1918 IPv4 address
     If input is a IPv6 or an invalid IP, this returns False
     """
-    expr = parse_into_expr(expr)
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        symbol="pl_is_private",
+        plugin_path=LIB,
+        function_name="pl_is_private",
         is_elementwise=True,
-        lib=lib,
     )
 
 
@@ -66,12 +60,11 @@ def ipv4_to_numeric(expr: IntoExpr) -> pl.Expr:
     """
     Returns numeric representation (u32) of IPv4 address string
     """
-    expr = parse_into_expr(expr)
-    return register_plugin(
+    return register_plugin_function(
         args=[expr],
-        symbol="pl_ipv4_to_numeric",
+        plugin_path=LIB,
+        function_name="pl_ipv4_to_numeric",
         is_elementwise=True,
-        lib=lib,
     )
 
 
@@ -79,14 +72,20 @@ def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
     """
     Returns IPv4 address string from its numeric representation
     """
-    expr = parse_into_expr(expr)
+    # Convert to a polars expression if not already one
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    elif isinstance(expr, pl.Series):
+        expr = pl.lit(expr)
+
     # cast to UInt32 and leave any errors as nulls
     expr = expr.cast(pl.UInt32, strict=False)
-    return register_plugin(
+
+    return register_plugin_function(
         args=[expr],
-        symbol="pl_numeric_to_ipv4",
+        plugin_path=LIB,
+        function_name="pl_numeric_to_ipv4",
         is_elementwise=True,
-        lib=lib,
     )
 
 
@@ -136,8 +135,12 @@ def extract_all_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
     Expr
         Expression of data type `List(String)`.
     """
+    # Convert to a polars expression if not already one
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    elif isinstance(expr, pl.Series):
+        expr = pl.lit(expr)
 
-    expr = parse_into_expr(expr)
     if ipv6:
         return expr.str.extract_all(ALL_IP_PATT)
     else:
@@ -183,12 +186,11 @@ def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
 
     nets = nets.unique().drop_nulls()
 
-    expr = parse_into_expr(expr)
-    return register_plugin(
+    return register_plugin_function(
         args=[expr, nets],
-        symbol="pl_is_in",
+        plugin_path=LIB,
+        function_name="pl_is_in",
         is_elementwise=True,
-        lib=lib,
     )
 
 

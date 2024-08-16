@@ -183,7 +183,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
     let longitude_series = longitude_builder.finish().into_series();
     let timezone_series = timezone_builder.finish().into_series();
 
-    let out = StructChunked::new(
+    StructChunked::from_series(
         "geoip",
         &[
             asnnum_series,
@@ -198,8 +198,8 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
             longitude_series,
             timezone_series,
         ],
-    )?;
-    Ok(out.into_series())
+    )
+    .map(|ca| ca.into_series())
 }
 
 // Get ASN and org name for Internet routed IP addresses
@@ -222,7 +222,7 @@ fn pl_get_asn(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series> {
 
     let ca: &StringChunked = inputs[0].str()?;
 
-    let out: StringChunked = ca.apply_to_buffer(|value: &str, output: &mut String| {
+    let out: StringChunked = ca.apply_into_string_amortized(|value: &str, output: &mut String| {
         if let Ok(ip) = value.parse::<IpAddr>() {
             // only emit ASN information if we have a) a valid IP and b) it exists
             // in the asn mmdb. if it's a valid ip but not in the mmdb (e.g. private IPs),
