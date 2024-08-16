@@ -72,8 +72,15 @@ def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
     """
     Returns IPv4 address string from its numeric representation
     """
+    # Convert to a polars expression if not already one
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    elif isinstance(expr, pl.Series):
+        expr = pl.lit(expr)
+
     # cast to UInt32 and leave any errors as nulls
-    expr = pl.select(expr).to_series().cast(pl.UInt32, strict=False)
+    expr = expr.cast(pl.UInt32, strict=False)
+
     return register_plugin_function(
         args=[expr],
         plugin_path=LIB,
