@@ -56,11 +56,12 @@ def test_full_geoip_lookup():
                 pl.Field("latitude", pl.Float64),
                 pl.Field("longitude", pl.Float64),
                 pl.Field("timezone", pl.Utf8),
+                pl.Field("postalcode", pl.Utf8),
             ]
         ),
     }
 
-    ips = ["67.43.156.1", "240b::beef:0:24"]
+    ips = ["67.43.156.1", "240b::beef:0:24", "202.196.224.99"]
 
     df = pl.DataFrame({"ip": ips})
     result = df.with_columns(result=ip.geoip.full("ip"))
@@ -81,8 +82,36 @@ def test_full_geoip_lookup():
                     27.5,
                     90.5,
                     "Asia/Thimphu",
+                    "",
                 ),
-                (2516, "KDDI KDDI CORPORATION", "", "", "", "", "", "", 0.0, 0.0, ""),
+                (
+                    2516,
+                    "KDDI KDDI CORPORATION",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    0.0,
+                    0.0,
+                    "",
+                    "",
+                ),
+                (
+                    0,
+                    "",
+                    "",
+                    "AS",
+                    "",
+                    "",
+                    "PH",
+                    "Philippines",
+                    13.0,
+                    122.0,
+                    "Asia/Manila",
+                    "34021",
+                ),
             ],
         },
         schema_overrides=schema,

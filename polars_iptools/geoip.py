@@ -95,6 +95,7 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
         - subdivision : String
         - subdivision_iso : String
         - timezone : String
+        - postalcode: String
 
     Example
     -------
@@ -108,7 +109,7 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     ┌─────────────────┬─────────────────────────────────┐
     │ ip              ┆ geoip                           │
     │ ---             ┆ ---                             │
-    │ str             ┆ struct[11]                      │
+    │ str             ┆ struct[12]                      │
     ╞═════════════════╪═════════════════════════════════╡
     │ 8.8.8.8         ┆ {15169,"GOOGLE","","NA","","",… │
     │ 192.168.1.1     ┆ {0,"","","","","","","",0.0,0.… │
@@ -122,7 +123,7 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
              Struct({'asnnum': UInt32, 'asnorg': String, 'city': String,
              'continent': String, 'subdivision_iso': String, 'subdivision': String,
              'country_iso': String, 'country': String, 'latitude': Float64,
-             'longitude': Float64, 'timezone': String}))])
+             'longitude': Float64, 'timezone': String, 'postalcode': String}))])
     Notes
     -----
     - IP addresses that are invalid or not found in the database will result in `null` values in the respective fields.
