@@ -19,6 +19,14 @@ pre-commit: .venv
 	.venv/bin/python -m ruff format polars_iptools tests
 	.venv/bin/mypy polars_iptools tests
 
+clean:
+	cargo clean
+	find polars_iptools -name "*.so" -type f -delete
+
+fetch-test-mmdb:
+	@curl -L -o tests/maxmind/GeoLite2-City.mmdb https://raw.githubusercontent.com/maxmind/MaxMind-DB/main/test-data/GeoLite2-City-Test.mmdb
+	@curl -L -o tests/maxmind/GeoLite2-ASN.mmdb https://raw.githubusercontent.com/maxmind/MaxMind-DB/main/test-data/GeoLite2-ASN-Test.mmdb
+
 test: .venv
 	.venv/bin/python -m pytest tests
 

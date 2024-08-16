@@ -20,6 +20,7 @@ fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
     let latitude = Field::new("latitude", DataType::Float64);
     let longitude = Field::new("longitude", DataType::Float64);
     let timezone = Field::new("timezone", DataType::String);
+    let postalcode = Field::new("postalcode", DataType::String);
 
     let v: Vec<Field> = vec![
         asnnum,
@@ -33,6 +34,7 @@ fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
         latitude,
         longitude,
         timezone,
+        postalcode,
     ];
     Ok(Field::new("", DataType::Struct(v)))
 }
@@ -72,6 +74,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
     let mut longitude_builder: PrimitiveChunkedBuilder<Float64Type> =
         PrimitiveChunkedBuilder::new("longitude", ca.len());
     let mut timezone_builder = StringChunkedBuilder::new("timezone", ca.len());
+    let mut postalcode_builder = StringChunkedBuilder::new("postalcode", ca.len());
 
     ca.into_iter().for_each(|op_s| {
         if let Some(ip_s) = op_s {
@@ -87,6 +90,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
                 let mut latitude: f64 = 0.0;
                 let mut longitude: f64 = 0.0;
                 let mut timezone: &str = "";
+                let mut postalcode: &str = "";
 
                 if let Ok(asnrecord) = asn_reader.lookup::<geoip2::Asn>(ip) {
                     asnnum = asnrecord.autonomous_system_number.unwrap_or(0);
@@ -127,6 +131,9 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
                         latitude = locrecord.latitude.unwrap_or(0.0);
                         longitude = locrecord.longitude.unwrap_or(0.0);
                     };
+
+                    // pull out postal code/zip code
+                    postalcode = cityrecord.postal.and_then(|c| c.code).unwrap_or("");
                 };
 
                 // add values to the builders
@@ -141,6 +148,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
                 latitude_builder.append_value(latitude);
                 longitude_builder.append_value(longitude);
                 timezone_builder.append_value(timezone);
+                postalcode_builder.append_value(postalcode);
             } else {
                 // invalid ip, so append nulls for everything
                 asnnum_builder.append_null();
@@ -154,6 +162,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
                 latitude_builder.append_null();
                 longitude_builder.append_null();
                 timezone_builder.append_null();
+                postalcode_builder.append_null();
             }
         } else {
             // null input, so append nulls for everything
@@ -168,6 +177,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
             latitude_builder.append_null();
             longitude_builder.append_null();
             timezone_builder.append_null();
+            postalcode_builder.append_null();
         }
     });
 
@@ -182,6 +192,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
     let latitude_series = latitude_builder.finish().into_series();
     let longitude_series = longitude_builder.finish().into_series();
     let timezone_series = timezone_builder.finish().into_series();
+    let postalcode_series = postalcode_builder.finish().into_series();
 
     StructChunked::from_series(
         "geoip",
@@ -197,6 +208,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
             latitude_series,
             longitude_series,
             timezone_series,
+            postalcode_series,
         ],
     )
     .map(|ca| ca.into_series())
