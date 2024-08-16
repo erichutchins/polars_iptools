@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 from collections.abc import Iterable
+from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 import polars as pl
@@ -128,6 +128,12 @@ def extract_all_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
     Expr
         Expression of data type `List(String)`.
     """
+    # Convert to a polars expression if not already one
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    elif isinstance(expr, pl.Series):
+        expr = pl.lit(expr)
+
     if ipv6:
         return expr.str.extract_all(ALL_IP_PATT)
     else:
