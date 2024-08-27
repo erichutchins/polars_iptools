@@ -20,3 +20,4 @@ target/
 *.pyc
 target
 .venv
+.DS_Store
