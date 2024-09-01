@@ -2,7 +2,6 @@
 use lazy_static::lazy_static;
 use maxminddb::{geoip2, Mmap, Reader};
 use polars::prelude::*;
-use serde::Deserialize;
 use std::env;
 use std::io;
 use std::net::IpAddr;
@@ -73,14 +72,6 @@ lazy_static! {
 pub struct MaxMindDB {
     asn_reader: Reader<Mmap>,
     city_reader: Reader<Mmap>,
-}
-
-/// Kwargs struct for Polars expression params
-#[derive(Deserialize)]
-pub struct GeoIPKwargs {
-    // geoip expressions should first reload/reinitialize mmdb files
-    // before querying
-    pub reload_mmdb: bool,
 }
 
 /// Helper function to locate the MaxMind MMDB directory on the system

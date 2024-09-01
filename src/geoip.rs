@@ -5,8 +5,8 @@ use pyo3_polars::derive::polars_expr;
 use std::fmt::Write;
 use std::net::IpAddr;
 
-use crate::maxmind::{GeoIPKwargs, MaxMindDB, MAXMIND_FIELDS};
-use crate::utils::create_builders;
+use crate::maxmind::{MaxMindDB, MAXMIND_FIELDS};
+use crate::utils::{create_builders, MMDBKwargs};
 
 // borrowing pattern from github.com/abstractqqq/polars_istr
 fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
@@ -20,7 +20,7 @@ fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
 
 // Build struct containing ASN and City level metadata of input IP addresses
 #[polars_expr(output_type_func=geoip_full_output)]
-fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series> {
+fn pl_full_geoip(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
     if kwargs.reload_mmdb {
         MaxMindDB::reload()?;
     }
@@ -78,7 +78,7 @@ fn pl_full_geoip(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series>
 
 // Get ASN and org name for Internet routed IP addresses
 #[polars_expr(output_type=String)]
-fn pl_get_asn(inputs: &[Series], kwargs: GeoIPKwargs) -> PolarsResult<Series> {
+fn pl_get_asn(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
     if kwargs.reload_mmdb {
         MaxMindDB::reload()?;
     }
