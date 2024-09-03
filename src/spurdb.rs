@@ -32,6 +32,7 @@ pub struct SpurResult<'a> {
     pub location_city: &'a str,
     pub location_country: &'a str,
     pub location_state: &'a str,
+    // declare services as an Option to avoid unnecessary allocations
     pub services: Option<Vec<&'a str>>,
     pub tag: &'a str,
 }

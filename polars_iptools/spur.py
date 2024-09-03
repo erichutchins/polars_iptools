@@ -26,6 +26,9 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     format. See https://docs.spur.us/feeds?id=feed-export-utility for
     more details.
 
+    This function requires the directory containing "spur.mmdb" to be
+    defined by environment variable SPUR_MMDB_DIR.
+
     Parameters
     ----------
     expr
@@ -50,18 +53,17 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     >>> import polars as pl
     >>> import polars_iptools as ip
 
-    >>> df = pl.DataFrame({"ip":["8.8.8.8", "192.168.1.1", "2606:4700::1111", "999.abc.def.123"]})
+    >>> df = pl.DataFrame({"ip":["8.8.8.8", "192.168.1.1", "999.abc.def.123"]})
     >>> df = df.with_columns([ip.spur.full(pl.col("ip")).alias("spurcontext")])
 
-    shape: (4, 2)
+    shape: (3, 2)
     ┌─────────────────┬─────────────────────────────────┐
     │ ip              ┆ geoip                           │
     │ ---             ┆ ---                             │
-    │ str             ┆ struct[12]                      │
+    │ str             ┆ struct[7]                       │
     ╞═════════════════╪═════════════════════════════════╡
-    │ 8.8.8.8         ┆ {15169,"GOOGLE","","NA","","",… │
-    │ 192.168.1.1     ┆ {0,"","","","","","","",0.0,0.… │
-    │ 2606:4700::1111 ┆ {13335,"CLOUDFLARENET","","","… │
+    │ 8.8.8.8         ┆ {0.0,"","","","","",null}       │
+    │ 192.168.1.1     ┆ {0.0,"","","","","",null}       │
     │ 999.abc.def.123 ┆ {null,null,null,null,null,null… │
     └─────────────────┴─────────────────────────────────┘
 
@@ -84,3 +86,39 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
         },
         is_elementwise=True,
     )
+
+
+@pl.api.register_expr_namespace("spur")
+class SpurExprExt:
+    """
+    This class contains tools for Spur IP Context enrichment.
+
+    Polars Namespace: spur
+
+    Example: df.with_columns([pl.col("srcip").spur.full()])
+    """
+
+    # noqa: D102
+    def __init__(self, expr: pl.Expr):
+        self._expr: pl.Expr = expr
+
+    def full(self, reload_mmdb: bool = False) -> pl.Expr:
+        return full(self._expr, reload_mmdb=reload_mmdb)
+
+
+@pl.api.register_series_namespace("spur")
+class SpurSeriesExt:
+    """
+    This class contains tools for Spur IP Context enrichment.
+
+    Polars Namespace: spur
+
+    Example: df["srcip"].spur.full()
+    """
+
+    # noqa: D102
+    def __init__(self, s: pl.Series):
+        self._s: pl.Series = s
+
+    def full(self, reload_mmdb: bool = False) -> pl.Series:
+        return pl.select(full(self._s, reload_mmdb=reload_mmdb)).to_series()

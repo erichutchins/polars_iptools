@@ -1,6 +1,6 @@
 # Polars IPTools
 
-Polars IPTools is a Rust-based extension to accelerates IP address manipulation and enrichment in Polars dataframes. This library includes various utility functions for working with IPv4 and IPv6 addresses and geoip enrichment using MaxMind databases.
+Polars IPTools is a Rust-based extension to accelerates IP address manipulation and enrichment in Polars dataframes. This library includes various utility functions for working with IPv4 and IPv6 addresses and geoip and anonymization/proxy enrichment using MaxMind databases.
 
 ## Install
 
@@ -95,6 +95,31 @@ shape: (4, 2)
 └─────────────────┴───────────────────────┘
 ```
 
+### Spur enrichment
+
+[Spur](https://spur.us/) is a commercial service that provides "data to detect VPNs, residential proxies, and bots". One of its offerings is a [Maxmind mmdb format](https://docs.spur.us/feeds?id=feed-export-utility) of at most 2,000,000 "busiest" Anonymous or Anonymous+Residential ips.
+
+`ip.spur.full` returns a Polars struct containing all available metadata parameters.
+
+```python
+>>> import polars as pl
+>>> import polars_iptools as ip
+
+>>> df = pl.DataFrame({"ip":["8.8.8.8", "192.168.1.1", "999.abc.def.123"]})
+>>> df.with_columns([ip.spur.full(pl.col("ip")).alias("spur")])
+
+shape: (3, 2)
+┌─────────────────┬─────────────────────────────────┐
+│ ip              ┆ geoip                           │
+│ ---             ┆ ---                             │
+│ str             ┆ struct[7]                       │
+╞═════════════════╪═════════════════════════════════╡
+│ 8.8.8.8         ┆ {0.0,"","","","","",null}       │
+│ 192.168.1.1     ┆ {0.0,"","","","","",null}       │
+│ 999.abc.def.123 ┆ {null,null,null,null,null,null… │
+└─────────────────┴─────────────────────────────────┘
+```
+
 ## Environment Configuration
 
 IPTools uses two MaxMind databases: _GeoLite2-ASN.mmdb_ and _GeoLite2-City.mmdb_. You only need these files if you call the geoip functions.
@@ -105,7 +130,7 @@ Set the `MAXMIND_MMDB_DIR` environment variable to tell the extension where thes
 export MAXMIND_MMDB_DIR=/path/to/your/mmdb/files
 # or Windows users
 set MAXMIND_MMDB_DIR=c:\path\to\your\mmdb\files
-```
+````
 
 If the environment is not set, polars_iptools will check two other common locations (on Mac/Linux):
 
@@ -113,6 +138,16 @@ If the environment is not set, polars_iptools will check two other common locati
 /usr/local/share/GeoIP
 /opt/homebrew/var/GeoIP
 ```
+
+### Spur Environment
+
+If you're a Spur customer, export the feed as `spur.mmdb` and specify its location using `SPUR_MMDB_DIR` environment variable.
+
+```shell
+export SPUR_MMDB_DIR=/path/to/spur/mmdb
+# or Windows users
+set SPUR_MMDB_DIR=c:\path\to\spur\mmdb
+````
 
 ## Credit
 
