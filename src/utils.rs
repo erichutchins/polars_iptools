@@ -1,76 +1,113 @@
 use polars::prelude::*;
+use serde::Deserialize;
 
-// This function is useful for writing functions which
-// accept pairs of List columns. Delete if unneded.
-#[allow(dead_code)]
-pub(crate) fn binary_amortized_elementwise<'a, T, K, F>(
-    ca: &'a ListChunked,
-    weights: &'a ListChunked,
-    mut f: F,
-) -> ChunkedArray<T>
-where
-    T: PolarsDataType,
-    T::Array: ArrayFromIter<Option<K>>,
-    F: FnMut(&Series, &Series) -> Option<K> + Copy,
-{
-    ca.amortized_iter()
-        .zip(weights.amortized_iter())
-        .map(|(lhs, rhs)| match (lhs, rhs) {
-            (Some(lhs), Some(rhs)) => f(lhs.as_ref(), rhs.as_ref()),
-            _ => None,
-        })
-        .collect_ca(ca.name())
+/// Kwargs struct for Polars expression params
+#[derive(Deserialize)]
+pub struct MMDBKwargs {
+    // geoip expressions should first reload/reinitialize mmdb files
+    // before querying
+    pub reload_mmdb: bool,
 }
 
-// This function is useful for writing functions which
-// accept pairs of columns and produce String output. Delete if unneded.
-//
-// To use it, you will also need to import the following:
-//
-//     use polars_arrow::array::Array;
-//     use polars_arrow::array::MutablePlString;
-//     use polars_core::utils::align_chunks_binary;
-//     use std::fmt::Write;
-//
-// and make sure you have
-//
-//     polars-arrow = { version = "0.37.0", default-features = false }
-//     polars-core = { version = "0.37.0", default-features = false }
-//
-// in your `Cargo.toml` file.
-// Only uncomment if needed
-// pub(crate) fn binary_apply_to_buffer_generic<T, K, F>(
-//     lhs: &ChunkedArray<T>,
-//     rhs: &ChunkedArray<K>,
-//     mut f: F,
-// ) -> StringChunked
-// where
-//     T: PolarsDataType,
-//     K: PolarsDataType,
-//     F: for<'a> FnMut(T::Physical<'a>, K::Physical<'a>) -> String,
-// {
-//     let (lhs, rhs) = align_chunks_binary(lhs, rhs);
-//     let chunks = lhs
-//         .downcast_iter()
-//         .zip(rhs.downcast_iter())
-//         .map(|(lhs_arr, rhs_arr)| {
-//             let mut buf = String::new();
-//             let mut mutarr = MutablePlString::with_capacity(lhs_arr.len());
+/// BuilderWrapper is an enum that wraps different types of Polars ChunkedBuilders.
+/// It provides a unified interface for appending values and handling nulls across
+/// different data types, simplifying the process of building Series with mixed types.
+/// This allows for creating a vec/array of disparate builder types, enabling
+/// flexible handling of multiple data types within a single collection.
+///
+/// Adding ListString variant was beyond my rust skills, but leaving its commented
+/// components for future reference (or more skill contributor)
+pub enum BuilderWrapper {
+    UInt32(PrimitiveChunkedBuilder<UInt32Type>),
+    Float32(PrimitiveChunkedBuilder<Float32Type>),
+    String(StringChunkedBuilder),
+    // ListString(ListStringChunkedBuilder),
+}
 
-//             for (lhs_opt_val, rhs_opt_val) in lhs_arr.iter().zip(rhs_arr.iter()) {
-//                 match (lhs_opt_val, rhs_opt_val) {
-//                     (Some(lhs_val), Some(rhs_val)) => {
-//                         let res = f(lhs_val, rhs_val);
-//                         buf.clear();
-//                         write!(buf, "{res}").unwrap();
-//                         mutarr.push(Some(&buf))
-//                     }
-//                     _ => mutarr.push_null(),
-//                 }
-//             }
+impl BuilderWrapper {
+    pub fn append_value<'a, T>(&mut self, value: T)
+    where
+        T: Into<AnyValue<'a>>,
+    {
+        let any_value: AnyValue = value.into();
+        match self {
+            BuilderWrapper::UInt32(b) => {
+                if let AnyValue::UInt32(v) = any_value {
+                    b.append_value(v)
+                } else {
+                    b.append_null()
+                }
+            }
+            BuilderWrapper::Float32(b) => {
+                if let AnyValue::Float32(v) = any_value {
+                    b.append_value(v)
+                } else {
+                    b.append_null()
+                }
+            }
+            BuilderWrapper::String(b) => {
+                if let AnyValue::String(v) = any_value {
+                    b.append_value(v)
+                } else {
+                    b.append_null()
+                }
+            } // BuilderWrapper::ListString(b) => {
+              //     if let AnyValue::List(v) = any_value {
+              //         let string_iter = v.iter().filter_map(|av| match av {
+              //             AnyValue::String(s) => Some(s),
+              //             _ => None,
+              //         });
+              //         b.append_values_iter(string_iter);
+              //     } else {
+              //         b.append_null()
+              //     }
+              // }
+              // BuilderWrapper::ListString(b) => {
+              //     // Special handling for Vec<&str>
+              //     let string_slice = value.as_ref();
+              //     let string_iter = string_slice.iter().copied();
+              //     b.append_values_iter(string_iter);
+              // }
+        }
+    }
 
-//             mutarr.freeze().boxed()
-//         })
-//         .collect();
-//     unsafe { ChunkedArray::from_chunks("placeholder", chunks) }
-// }
+    pub fn append_null(&mut self) {
+        match self {
+            BuilderWrapper::UInt32(b) => b.append_null(),
+            BuilderWrapper::Float32(b) => b.append_null(),
+            BuilderWrapper::String(b) => b.append_null(),
+            // BuilderWrapper::ListString(b) => b.append_null(),
+        }
+    }
+
+    pub fn finish(self) -> Series {
+        match self {
+            BuilderWrapper::UInt32(b) => b.finish().into_series(),
+            BuilderWrapper::Float32(b) => b.finish().into_series(),
+            BuilderWrapper::String(b) => b.finish().into_series(),
+            // BuilderWrapper::ListString(mut b) => b.finish().into_series(),
+        }
+    }
+}
+
+pub fn create_builders<'a, const N: usize>(
+    fields: &'a [(&'a str, DataType); N],
+    capacity: usize,
+) -> Vec<BuilderWrapper> {
+    fields
+        .iter()
+        .map(|(name, dtype)| match dtype {
+            DataType::UInt32 => {
+                BuilderWrapper::UInt32(PrimitiveChunkedBuilder::<UInt32Type>::new(name, capacity))
+            }
+            DataType::Float32 => {
+                BuilderWrapper::Float32(PrimitiveChunkedBuilder::<Float32Type>::new(name, capacity))
+            }
+            DataType::String => BuilderWrapper::String(StringChunkedBuilder::new(name, capacity)),
+            // DataType::List(inner_type) if matches!(**inner_type, DataType::String) => {
+            //     BuilderWrapper::ListString(ListStringChunkedBuilder::new(name, capacity, 4))
+            // }
+            _ => panic!("Unsupported data type for field: {} {}", name, dtype),
+        })
+        .collect()
+}

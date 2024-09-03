@@ -1,12 +1,63 @@
 #![allow(clippy::unused_unit)]
 use lazy_static::lazy_static;
-use maxminddb::{Mmap, Reader};
+use maxminddb::{geoip2, Mmap, Reader};
 use polars::prelude::*;
-use serde::Deserialize;
 use std::env;
 use std::io;
+use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+
+// Define the fields and types that we will support
+pub const MAXMIND_FIELDS: [(&str, DataType); 12] = [
+    ("asnnum", DataType::UInt32),
+    ("asnorg", DataType::String),
+    ("city", DataType::String),
+    ("continent", DataType::String),
+    ("country", DataType::String),
+    ("country_iso", DataType::String),
+    ("latitude", DataType::Float64),
+    ("longitude", DataType::Float64),
+    ("postalcode", DataType::String),
+    ("subdivision", DataType::String),
+    ("subdivision_iso", DataType::String),
+    ("timezone", DataType::String),
+];
+
+// Define a struct to hold all the fields using &str instead of String
+pub struct MaxmindIPResult<'a> {
+    pub asnnum: u32,
+    pub asnorg: &'a str,
+    pub city: &'a str,
+    pub continent: &'a str,
+    pub country: &'a str,
+    pub country_iso: &'a str,
+    pub latitude: f64,
+    pub longitude: f64,
+    pub postalcode: &'a str,
+    pub subdivision: &'a str,
+    pub subdivision_iso: &'a str,
+    pub timezone: &'a str,
+}
+
+impl<'a> Default for MaxmindIPResult<'a> {
+    fn default() -> Self {
+        Self {
+            asnnum: 0,
+            asnorg: "",
+            city: "",
+            continent: "",
+            country: "",
+            country_iso: "",
+            latitude: 0.0,
+            longitude: 0.0,
+            postalcode: "",
+            subdivision: "",
+            subdivision_iso: "",
+            timezone: "",
+        }
+    }
+}
 
 // Mutex implementation and error handling improvements provided
 // by ChatGPT on 20240717 using GPT-4o
@@ -21,14 +72,6 @@ lazy_static! {
 pub struct MaxMindDB {
     asn_reader: Reader<Mmap>,
     city_reader: Reader<Mmap>,
-}
-
-/// Kwargs struct for Polars expression params
-#[derive(Deserialize)]
-pub struct GeoIPKwargs {
-    // geoip expressions should first reload/reinitialize mmdb files
-    // before querying
-    pub reload_mmdb: bool,
 }
 
 /// Helper function to locate the MaxMind MMDB directory on the system
@@ -132,7 +175,103 @@ impl MaxMindDB {
         &self.asn_reader
     }
 
-    pub fn city_reader(&self) -> &Reader<Mmap> {
-        &self.city_reader
+    // pub fn city_reader(&self) -> &Reader<Mmap> {
+    //     &self.city_reader
+    // }
+
+    pub fn iplookup(&self, ip: IpAddr) -> MaxmindIPResult<'_> {
+        let mut result = MaxmindIPResult::default();
+
+        // Lookup ASN information
+        if let Ok(asn) = self.asn_reader.lookup::<geoip2::Asn>(ip) {
+            result.asnnum = asn.autonomous_system_number.unwrap_or(0);
+            result.asnorg = asn.autonomous_system_organization.unwrap_or("");
+        }
+
+        // Lookup City information
+        if let Ok(city_result) = self.city_reader.lookup::<geoip2::City>(ip) {
+            // as_ref() and &**s magic provided by ChatGPT on 20240825 using GPT-4o
+            result.city = city_result
+                .city
+                .as_ref()
+                .and_then(|city| {
+                    city.names
+                        .as_ref()
+                        .and_then(|names| names.get("en").map(|s| &**s))
+                })
+                .unwrap_or("");
+
+            result.continent = city_result
+                .continent
+                .as_ref()
+                .and_then(|continent| {
+                    continent
+                        .names
+                        .as_ref()
+                        .and_then(|names| names.get("en").map(|s| &**s))
+                })
+                .unwrap_or("");
+
+            result.country = city_result
+                .country
+                .as_ref()
+                .and_then(|country| {
+                    country
+                        .names
+                        .as_ref()
+                        .and_then(|names| names.get("en").map(|s| &**s))
+                })
+                .unwrap_or("");
+
+            result.country_iso = city_result
+                .country
+                .as_ref()
+                .and_then(|country| country.iso_code)
+                .unwrap_or("");
+
+            result.latitude = city_result
+                .location
+                .as_ref()
+                .and_then(|loc| loc.latitude)
+                .unwrap_or(0.0);
+
+            result.longitude = city_result
+                .location
+                .as_ref()
+                .and_then(|loc| loc.longitude)
+                .unwrap_or(0.0);
+
+            result.postalcode = city_result
+                .postal
+                .as_ref()
+                .and_then(|postal| postal.code)
+                .unwrap_or("");
+
+            result.subdivision = city_result
+                .subdivisions
+                .as_ref()
+                .and_then(|subs| {
+                    subs.first().and_then(|sub| {
+                        sub.names
+                            .as_ref()
+                            .and_then(|names| names.get("en").map(|s| &**s))
+                    })
+                })
+                .unwrap_or("");
+
+            result.subdivision_iso = city_result
+                .subdivisions
+                .as_ref()
+                .and_then(|subs| subs.first().and_then(|sub| sub.iso_code))
+                .unwrap_or("");
+
+            result.timezone = city_result
+                .location
+                .as_ref()
+                .and_then(|loc| loc.time_zone)
+                .unwrap_or("");
+        }
+
+        result
     }
 }
