@@ -1,4 +1,4 @@
-use polars::prelude::*;
+use polars::{chunked_array::builder::NullChunkedBuilder, prelude::*};
 use serde::Deserialize;
 
 /// Kwargs struct for Polars expression params
@@ -22,6 +22,7 @@ pub enum BuilderWrapper {
     Float32(PrimitiveChunkedBuilder<Float32Type>),
     String(StringChunkedBuilder),
     // ListString(ListStringChunkedBuilder),
+    Invalid(NullChunkedBuilder),
 }
 
 impl BuilderWrapper {
@@ -51,23 +52,25 @@ impl BuilderWrapper {
                 } else {
                     b.append_null()
                 }
-            } // BuilderWrapper::ListString(b) => {
-              //     if let AnyValue::List(v) = any_value {
-              //         let string_iter = v.iter().filter_map(|av| match av {
-              //             AnyValue::String(s) => Some(s),
-              //             _ => None,
-              //         });
-              //         b.append_values_iter(string_iter);
-              //     } else {
-              //         b.append_null()
-              //     }
-              // }
-              // BuilderWrapper::ListString(b) => {
-              //     // Special handling for Vec<&str>
-              //     let string_slice = value.as_ref();
-              //     let string_iter = string_slice.iter().copied();
-              //     b.append_values_iter(string_iter);
-              // }
+            }
+            BuilderWrapper::Invalid(b) => b.append_null(),
+            // BuilderWrapper::ListString(b) => {
+            //     if let AnyValue::List(v) = any_value {
+            //         let string_iter = v.iter().filter_map(|av| match av {
+            //             AnyValue::String(s) => Some(s),
+            //             _ => None,
+            //         });
+            //         b.append_values_iter(string_iter);
+            //     } else {
+            //         b.append_null()
+            //     }
+            // }
+            // BuilderWrapper::ListString(b) => {
+            //     // Special handling for Vec<&str>
+            //     let string_slice = value.as_ref();
+            //     let string_iter = string_slice.iter().copied();
+            //     b.append_values_iter(string_iter);
+            // }
         }
     }
 
@@ -77,6 +80,7 @@ impl BuilderWrapper {
             BuilderWrapper::Float32(b) => b.append_null(),
             BuilderWrapper::String(b) => b.append_null(),
             // BuilderWrapper::ListString(b) => b.append_null(),
+            BuilderWrapper::Invalid(b) => b.append_null(),
         }
     }
 
@@ -86,6 +90,7 @@ impl BuilderWrapper {
             BuilderWrapper::Float32(b) => b.finish().into_series(),
             BuilderWrapper::String(b) => b.finish().into_series(),
             // BuilderWrapper::ListString(mut b) => b.finish().into_series(),
+            BuilderWrapper::Invalid(b) => b.finish().into_series(),
         }
     }
 }
@@ -107,7 +112,10 @@ pub fn create_builders<'a, const N: usize>(
             // DataType::List(inner_type) if matches!(**inner_type, DataType::String) => {
             //     BuilderWrapper::ListString(ListStringChunkedBuilder::new(name, capacity, 4))
             // }
-            _ => panic!("Unsupported data type for field: {} {}", name, dtype),
+            _ => {
+                let error_name = format!("{}_error", name);
+                BuilderWrapper::Invalid(NullChunkedBuilder::new(error_name.as_str(), capacity))
+            }
         })
         .collect()
 }
