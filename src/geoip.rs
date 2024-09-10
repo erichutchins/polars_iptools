@@ -42,7 +42,6 @@ fn pl_full_geoip(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> 
         if let Some(ip_s) = op_s {
             if let Ok(ip) = ip_s.parse::<IpAddr>() {
                 let geoipresult = mdb.iplookup(ip);
-
                 // add values to the builders
                 // Important: these must be in same order as MAXMIND_FIELDS
                 // sort alphabetically to ensure
@@ -50,14 +49,14 @@ fn pl_full_geoip(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> 
                 builders[1].append_value(geoipresult.asnorg);
                 builders[2].append_value(geoipresult.city);
                 builders[3].append_value(geoipresult.continent);
-                builders[4].append_value(geoipresult.subdivision_iso);
-                builders[5].append_value(geoipresult.subdivision);
-                builders[6].append_value(geoipresult.country_iso);
-                builders[7].append_value(geoipresult.country);
-                builders[8].append_value(geoipresult.latitude);
-                builders[9].append_value(geoipresult.longitude);
-                builders[10].append_value(geoipresult.timezone);
-                builders[11].append_value(geoipresult.postalcode);
+                builders[4].append_value(geoipresult.country);
+                builders[5].append_value(geoipresult.country_iso);
+                builders[6].append_value(geoipresult.latitude);
+                builders[7].append_value(geoipresult.longitude);
+                builders[8].append_value(geoipresult.postalcode);
+                builders[9].append_value(geoipresult.subdivision);
+                builders[10].append_value(geoipresult.subdivision_iso);
+                builders[11].append_value(geoipresult.timezone);
             } else {
                 // invalid ip, so append nulls for everything
                 builders

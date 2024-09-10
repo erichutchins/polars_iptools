@@ -25,6 +25,7 @@ pub const MAXMIND_FIELDS: [(&str, DataType); 12] = [
 ];
 
 // Define a struct to hold all the fields using &str instead of String
+#[derive(Debug)]
 pub struct MaxmindIPResult<'a> {
     pub asnnum: u32,
     pub asnorg: &'a str,
