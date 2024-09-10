@@ -4,6 +4,8 @@ build-backend = "maturin"
 
 [project]
 name = "polars-iptools"
+description = "Polars extension for IP address parsing and enrichment including geolocation"
+keywords = ["polars", "dfir", "geoip"]
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
