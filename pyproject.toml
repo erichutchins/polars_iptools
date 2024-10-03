@@ -12,6 +12,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+dependencies = ["polars>=1.7.1"]
 
 [tool.pyright]
 venvPath = "."
@@ -19,3 +20,17 @@ venv = ".venv"
 
 [tool.maturin]
 module-name = "polars_iptools._internal"
+
+[tool.hatch.envs.test]
+dependencies = [
+    "pytest",
+    "maturin",
+    "polars",
+    "maturin",
+    "ruff",
+    "pytest",
+    "mypy",
+]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["38", "39", "310", "311", "312"]
