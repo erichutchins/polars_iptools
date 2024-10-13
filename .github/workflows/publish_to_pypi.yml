@@ -39,12 +39,13 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Set up Python ${{ matrix.python-version }}
-      - uses: actions/setup-python@v5
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Set up Rust
         run: rustup show
+
       - uses: mozilla-actions/sccache-action@v0.0.3
       - run: make .venv
       - run: make pre-commit
