@@ -43,11 +43,13 @@ jobs:
 
       - name: Set up Rust
         run: rustup show
-
       - uses: mozilla-actions/sccache-action@v0.0.3
-      - run: make .venv
-      - run: make install
-      - run: make test
+
+      - name: Run tests
+        run: |
+          make .venv
+          make install
+          make test
 
   linux:
     runs-on: ubuntu-latest
