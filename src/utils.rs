@@ -39,28 +39,28 @@ impl BuilderWrapper {
                 } else {
                     b.append_null()
                 }
-            }
+            },
             BuilderWrapper::Float32(b) => {
                 if let AnyValue::Float32(v) = any_value {
                     b.append_value(v)
                 } else {
                     b.append_null()
                 }
-            }
+            },
             BuilderWrapper::Float64(b) => {
                 if let AnyValue::Float64(v) = any_value {
                     b.append_value(v)
                 } else {
                     b.append_null()
                 }
-            }
+            },
             BuilderWrapper::String(b) => {
                 if let AnyValue::String(v) = any_value {
                     b.append_value(v)
                 } else {
                     b.append_null()
                 }
-            }
+            },
             BuilderWrapper::Invalid(b) => b.append_null(),
             // BuilderWrapper::ListString(b) => {
             //     if let AnyValue::List(v) = any_value {
@@ -114,13 +114,13 @@ pub fn create_builders<'a, const N: usize>(
         .map(|(name, dtype)| match dtype {
             DataType::UInt32 => {
                 BuilderWrapper::UInt32(PrimitiveChunkedBuilder::<UInt32Type>::new(name, capacity))
-            }
+            },
             DataType::Float32 => {
                 BuilderWrapper::Float32(PrimitiveChunkedBuilder::<Float32Type>::new(name, capacity))
-            }
+            },
             DataType::Float64 => {
                 BuilderWrapper::Float64(PrimitiveChunkedBuilder::<Float64Type>::new(name, capacity))
-            }
+            },
             DataType::String => BuilderWrapper::String(StringChunkedBuilder::new(name, capacity)),
             // DataType::List(inner_type) if matches!(**inner_type, DataType::String) => {
             //     BuilderWrapper::ListString(ListStringChunkedBuilder::new(name, capacity, 4))
@@ -128,7 +128,7 @@ pub fn create_builders<'a, const N: usize>(
             _ => {
                 let error_name = format!("{}_error", name);
                 BuilderWrapper::Invalid(NullChunkedBuilder::new(error_name.as_str(), capacity))
-            }
+            },
         })
         .collect()
 }
