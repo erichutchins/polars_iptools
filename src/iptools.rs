@@ -32,7 +32,7 @@ fn pl_is_private(inputs: &[Series]) -> PolarsResult<Series> {
 fn pl_ipv4_to_numeric(inputs: &[Series]) -> PolarsResult<Series> {
     let ca: &StringChunked = inputs[0].str()?;
     let mut builder: PrimitiveChunkedBuilder<UInt32Type> =
-        PrimitiveChunkedBuilder::new(PlSmallStr::from("ipv4_numeric"), ca.len());
+        PrimitiveChunkedBuilder::new(PlSmallStr::from_static("ipv4_numeric"), ca.len());
 
     for opt_value in ca.into_iter() {
         if let Some(value) = opt_value {
@@ -55,7 +55,7 @@ fn pl_ipv4_to_numeric(inputs: &[Series]) -> PolarsResult<Series> {
 #[polars_expr(output_type=String)]
 fn pl_numeric_to_ipv4(inputs: &[Series]) -> PolarsResult<Series> {
     let ca: &UInt32Chunked = inputs[0].u32()?;
-    let mut builder = StringChunkedBuilder::new(PlSmallStr::from("ipv4_string"), ca.len());
+    let mut builder = StringChunkedBuilder::new(PlSmallStr::from_static("ipv4_string"), ca.len());
 
     for opt_value in ca.into_iter() {
         if let Some(num) = opt_value {
@@ -98,7 +98,7 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
     let ipv6_lctrie = ipv6_rtrie.compress();
 
     // Prepare builder to collect results
-    let mut builder = BooleanChunkedBuilder::new(PlSmallStr::from("is_in"), ca1.len());
+    let mut builder = BooleanChunkedBuilder::new(PlSmallStr::from_static("is_in"), ca1.len());
 
     for opt_value in ca1.into_iter() {
         if let Some(value) = opt_value {

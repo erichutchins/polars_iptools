@@ -72,7 +72,8 @@ fn pl_full_geoip(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> 
     });
 
     let series: Vec<Series> = builders.into_iter().map(|b| b.finish()).collect();
-    StructChunked::from_series(PlSmallStr::from("geoip"), &series).map(|ca| ca.into_series())
+    StructChunked::from_series(PlSmallStr::from_static("geoip"), ca.len(), series.iter())
+        .map(|ca| ca.into_series())
 }
 
 // Get ASN and org name for Internet routed IP addresses

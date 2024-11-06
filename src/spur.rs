@@ -41,7 +41,7 @@ fn pl_full_spur(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
     // was too complicated for my rust skills. Each List is initialized with a capacity of 4, which is a
     // generous estimate for the expected number of services per IP.
     let mut services_builder =
-        ListStringChunkedBuilder::new(PlSmallStr::from("services"), ca.len(), 4);
+        ListStringChunkedBuilder::new(PlSmallStr::from_static("services"), ca.len(), 4);
 
     ca.into_iter().for_each(|op_s| {
         if let Some(ip_s) = op_s {
@@ -84,5 +84,6 @@ fn pl_full_spur(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
     // finalize builders and instantiate resulting Struct
     let mut series: Vec<Series> = builders.into_iter().map(|b| b.finish()).collect();
     series.push(services_builder.finish().into_series());
-    StructChunked::from_series(PlSmallStr::from("spur"), &series).map(|ca| ca.into_series())
+    StructChunked::from_series(PlSmallStr::from_static("spur"), ca.len(), series.iter())
+        .map(|ca| ca.into_series())
 }
