@@ -50,9 +50,7 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Run tests
-        run: |
-          make install
-          make test
+        run: uv run pytest tests
 
   linux:
     runs-on: ubuntu-latest
