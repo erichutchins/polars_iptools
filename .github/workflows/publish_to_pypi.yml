@@ -35,6 +35,7 @@ jobs:
       - name: Install uv with cache
         uses: astral-sh/setup-uv@v3
         with:
+          version: "0.4.30"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
@@ -45,9 +46,11 @@ jobs:
         run: rustup show
       - uses: mozilla-actions/sccache-action@v0.0.3
 
+      - name: Install project
+        run: uv sync --all-extras --dev
+
       - name: Run tests
         run: |
-          make .venv
           make install
           make test
 
