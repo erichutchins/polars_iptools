@@ -40,7 +40,7 @@ fn pl_ipv4_to_numeric(inputs: &[Series]) -> PolarsResult<Series> {
                 Ok(ipv4) => {
                     let num = u32::from(ipv4);
                     builder.append_value(num);
-                }
+                },
                 Err(_) => builder.append_null(), // Handle invalid IPv4 strings
             }
         } else {
@@ -83,13 +83,13 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
         match IpNet::from_str(cidr) {
             Ok(IpNet::V4(ipv4)) => {
                 _ = ipv4_rtrie.insert(ipv4);
-            }
+            },
             Ok(IpNet::V6(ipv6)) => {
                 _ = ipv6_rtrie.insert(ipv6);
-            }
+            },
             Err(_) => {
                 polars_bail!(InvalidOperation: "Invalid CIDR range: {}", cidr);
-            }
+            },
         }
     }
 
@@ -111,7 +111,7 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
                         IpAddr::V6(ipv6) => ipv6_lctrie.lookup(&ipv6).len() > 0,
                     };
                     builder.append_value(is_in);
-                }
+                },
                 Err(_) => builder.append_null(), // Handle invalid IP strings
             }
         } else {
