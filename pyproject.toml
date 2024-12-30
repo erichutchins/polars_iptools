@@ -13,7 +13,12 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = ["maturin>=1.7.4", "mypy>=1.11.2", "polars>=1.7.1"]
+dependencies = [
+    "maturin>=1.7.4",
+    "mypy>=1.11.2",
+    "polars>=1.7.1",
+    "uv>=0.5.13",
+]
 
 [tool.pyright]
 venvPath = "."
