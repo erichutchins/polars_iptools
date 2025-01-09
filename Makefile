@@ -28,7 +28,7 @@ test: .venv
 	uv run pytest tests
 
 test-matrix: .venv
-	uv run hatch run test:tests
+	hatch run test:tests
 
 run: install
 	uv run run.py
