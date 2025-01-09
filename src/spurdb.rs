@@ -37,7 +37,7 @@ pub struct SpurResult<'a> {
     pub tag: &'a str,
 }
 
-impl<'a> Default for SpurResult<'a> {
+impl Default for SpurResult<'_> {
     fn default() -> Self {
         Self {
             client_count: 0.0,

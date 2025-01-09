@@ -40,14 +40,12 @@ impl BuilderWrapper {
                     b.append_null()
                 }
             },
-            },
             BuilderWrapper::Float32(b) => {
                 if let AnyValue::Float32(v) = any_value {
                     b.append_value(v)
                 } else {
                     b.append_null()
                 }
-            },
             },
             BuilderWrapper::Float64(b) => {
                 if let AnyValue::Float64(v) = any_value {
@@ -56,14 +54,12 @@ impl BuilderWrapper {
                     b.append_null()
                 }
             },
-            },
             BuilderWrapper::String(b) => {
                 if let AnyValue::String(v) = any_value {
                     b.append_value(v)
                 } else {
                     b.append_null()
                 }
-            },
             },
             BuilderWrapper::Invalid(b) => b.append_null(),
             // BuilderWrapper::ListString(b) => {
@@ -139,7 +135,7 @@ pub fn create_builders<'a, const N: usize>(
                     PlSmallStr::from_str(error_name.as_str()),
                     capacity,
                 ))
-            }
+            },
         })
         .collect()
 }

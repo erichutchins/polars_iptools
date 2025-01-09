@@ -41,7 +41,7 @@ pub struct MaxmindIPResult<'a> {
     pub timezone: &'a str,
 }
 
-impl<'a> Default for MaxmindIPResult<'a> {
+impl Default for MaxmindIPResult<'_> {
     fn default() -> Self {
         Self {
             asnnum: 0,
