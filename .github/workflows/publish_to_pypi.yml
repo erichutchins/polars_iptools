@@ -8,6 +8,7 @@ on:
     tags:
       - "*"
       - "*"
+      - "*"
   pull_request:
   workflow_dispatch:
 
@@ -28,6 +29,7 @@ jobs:
     strategy:
       matrix:
         target: [x86_64]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
@@ -58,13 +60,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
+          python-version: "3.10"
           python-version: "3.10"
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
+          sccache: "true"
           sccache: "true"
           manylinux: auto
       - name: Upload wheels
@@ -81,15 +87,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
           architecture: ${{ matrix.target }}
+
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
+          sccache: "true"
           sccache: "true"
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -105,13 +115,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
+          python-version: "3.10"
           python-version: "3.10"
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
+          sccache: "true"
           sccache: "true"
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -122,6 +136,7 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/checkout@v4
       - name: Build sdist
         uses: PyO3/maturin-action@v1
@@ -141,6 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
       id-token: write # IMPORTANT: mandatory for trusted publishing
     steps:
       - uses: actions/download-artifact@v3
