@@ -40,12 +40,14 @@ impl BuilderWrapper {
                     b.append_null()
                 }
             },
+            },
             BuilderWrapper::Float32(b) => {
                 if let AnyValue::Float32(v) = any_value {
                     b.append_value(v)
                 } else {
                     b.append_null()
                 }
+            },
             },
             BuilderWrapper::Float64(b) => {
                 if let AnyValue::Float64(v) = any_value {
@@ -54,12 +56,14 @@ impl BuilderWrapper {
                     b.append_null()
                 }
             },
+            },
             BuilderWrapper::String(b) => {
                 if let AnyValue::String(v) = any_value {
                     b.append_value(v)
                 } else {
                     b.append_null()
                 }
+            },
             },
             BuilderWrapper::Invalid(b) => b.append_null(),
             // BuilderWrapper::ListString(b) => {
@@ -112,23 +116,30 @@ pub fn create_builders<'a, const N: usize>(
     fields
         .iter()
         .map(|(name, dtype)| match dtype {
-            DataType::UInt32 => {
-                BuilderWrapper::UInt32(PrimitiveChunkedBuilder::<UInt32Type>::new(name, capacity))
-            },
-            DataType::Float32 => {
-                BuilderWrapper::Float32(PrimitiveChunkedBuilder::<Float32Type>::new(name, capacity))
-            },
-            DataType::Float64 => {
-                BuilderWrapper::Float64(PrimitiveChunkedBuilder::<Float64Type>::new(name, capacity))
-            },
-            DataType::String => BuilderWrapper::String(StringChunkedBuilder::new(name, capacity)),
+            DataType::UInt32 => BuilderWrapper::UInt32(PrimitiveChunkedBuilder::<UInt32Type>::new(
+                PlSmallStr::from_str(name),
+                capacity,
+            )),
+            DataType::Float32 => BuilderWrapper::Float32(
+                PrimitiveChunkedBuilder::<Float32Type>::new(PlSmallStr::from_str(name), capacity),
+            ),
+            DataType::Float64 => BuilderWrapper::Float64(
+                PrimitiveChunkedBuilder::<Float64Type>::new(PlSmallStr::from_str(name), capacity),
+            ),
+            DataType::String => BuilderWrapper::String(StringChunkedBuilder::new(
+                PlSmallStr::from_str(name),
+                capacity,
+            )),
             // DataType::List(inner_type) if matches!(**inner_type, DataType::String) => {
             //     BuilderWrapper::ListString(ListStringChunkedBuilder::new(name, capacity, 4))
             // }
             _ => {
                 let error_name = format!("{}_error", name);
-                BuilderWrapper::Invalid(NullChunkedBuilder::new(error_name.as_str(), capacity))
-            },
+                BuilderWrapper::Invalid(NullChunkedBuilder::new(
+                    PlSmallStr::from_str(error_name.as_str()),
+                    capacity,
+                ))
+            }
         })
         .collect()
 }

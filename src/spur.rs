@@ -10,10 +10,10 @@ use crate::utils::{create_builders, MMDBKwargs};
 fn spur_full_output(_: &[Field]) -> PolarsResult<Field> {
     let v: Vec<Field> = SPUR_FIELDS
         .iter()
-        .map(|(name, data_type)| Field::new(name, data_type.clone()))
+        .map(|(name, data_type)| Field::new(PlSmallStr::from_str(name), data_type.clone()))
         .collect();
 
-    Ok(Field::new("", DataType::Struct(v)))
+    Ok(Field::new(PlSmallStr::EMPTY, DataType::Struct(v)))
 }
 
 // Build struct containing Spur IP Context for Anonymous or Anonymous+Residential
@@ -40,7 +40,8 @@ fn pl_full_spur(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
     // Note: ListStringChunkedBuilder is created separately as adding it to the BuilderWrapper enum
     // was too complicated for my rust skills. Each List is initialized with a capacity of 4, which is a
     // generous estimate for the expected number of services per IP.
-    let mut services_builder = ListStringChunkedBuilder::new("services", ca.len(), 4);
+    let mut services_builder =
+        ListStringChunkedBuilder::new(PlSmallStr::from_static("services"), ca.len(), 4);
 
     ca.into_iter().for_each(|op_s| {
         if let Some(ip_s) = op_s {
@@ -83,5 +84,6 @@ fn pl_full_spur(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
     // finalize builders and instantiate resulting Struct
     let mut series: Vec<Series> = builders.into_iter().map(|b| b.finish()).collect();
     series.push(services_builder.finish().into_series());
-    StructChunked::from_series("spur", &series).map(|ca| ca.into_series())
+    StructChunked::from_series(PlSmallStr::from_static("spur"), ca.len(), series.iter())
+        .map(|ca| ca.into_series())
 }
