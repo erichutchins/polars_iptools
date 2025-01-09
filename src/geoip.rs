@@ -12,10 +12,10 @@ use crate::utils::{create_builders, MMDBKwargs};
 fn geoip_full_output(_: &[Field]) -> PolarsResult<Field> {
     let v: Vec<Field> = MAXMIND_FIELDS
         .iter()
-        .map(|(name, data_type)| Field::new(name, data_type.clone()))
+        .map(|(name, data_type)| Field::new(PlSmallStr::from_str(name), data_type.clone()))
         .collect();
 
-    Ok(Field::new("", DataType::Struct(v)))
+    Ok(Field::new(PlSmallStr::EMPTY, DataType::Struct(v)))
 }
 
 // Build struct containing ASN and City level metadata of input IP addresses
@@ -72,7 +72,8 @@ fn pl_full_geoip(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> 
     });
 
     let series: Vec<Series> = builders.into_iter().map(|b| b.finish()).collect();
-    StructChunked::from_series("geoip", &series).map(|ca| ca.into_series())
+    StructChunked::from_series(PlSmallStr::from_static("geoip"), ca.len(), series.iter())
+        .map(|ca| ca.into_series())
 }
 
 // Get ASN and org name for Internet routed IP addresses
