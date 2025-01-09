@@ -322,7 +322,9 @@ checksum = "b248f5224d1d606005e02c97f5aa4e88eeb230488bcc03bc9ca4d7991399f2b5"
 [[package]]
 name = "ipnet"
 version = "2.10.1"
+version = "2.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddc24109865250148c2e0f3d25d4f0f479571723792d3802153c60922a4fb708"
 checksum = "ddc24109865250148c2e0f3d25d4f0f479571723792d3802153c60922a4fb708"
 
 [[package]]
@@ -337,7 +339,9 @@ dependencies = [
 [[package]]
 name = "iptrie"
 version = "0.8.8"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7abaf841934765417113653eaa76d8ceb5df0d1d8a628d5b48d945f63da57dfd"
 checksum = "7abaf841934765417113653eaa76d8ceb5df0d1d8a628d5b48d945f63da57dfd"
 dependencies = [
  "ipnet",

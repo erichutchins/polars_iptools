@@ -7,11 +7,13 @@ on:
       - master
     tags:
       - "*"
+      - "*"
   pull_request:
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
+
 
   cancel-in-progress: true
 
@@ -34,7 +36,14 @@ jobs:
 
       - name: Install uv with cache
         uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v4
+
+      - name: Install uv with cache
+        uses: astral-sh/setup-uv@v5
         with:
+          version: "0.5.13"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
           version: "0.5.13"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -42,6 +51,13 @@ jobs:
 
       - name: Set up Rust
         run: rustup show
+      - uses: mozilla-actions/sccache-action@v0.0.7
+
+      - name: Install project
+        run: uv sync --all-extras --dev
+
+      - name: Run tests
+        run: uv run pytest tests
       - uses: mozilla-actions/sccache-action@v0.0.7
 
       - name: Install project
@@ -58,14 +74,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
+          python-version: "3.10"
           python-version: "3.10"
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
 
+
           args: --release --out dist --find-interpreter
+          sccache: "true"
           sccache: "true"
           manylinux: auto
       - name: Upload wheels
@@ -82,17 +103,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
+          python-version: "3.10"
+
           architecture: ${{ matrix.target }}
+
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
 
+
           args: --release --out dist --find-interpreter
+          sccache: "true"
           sccache: "true"
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -108,14 +136,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
+          python-version: "3.10"
           python-version: "3.10"
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
 
+
           args: --release --out dist --find-interpreter
+          sccache: "true"
           sccache: "true"
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -126,6 +159,7 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/checkout@v4
       - name: Build sdist
         uses: PyO3/maturin-action@v1
@@ -145,6 +179,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
       id-token: write # IMPORTANT: mandatory for trusted publishing
     steps:
       - uses: actions/download-artifact@v3
