@@ -2,22 +2,16 @@ SHELL=/bin/bash
 
 .venv:  ## Set up virtual environment
 	uv sync --all-extras --dev
-	uv sync --all-extras --dev
 
 install: .venv
 	unset CONDA_PREFIX && \
-	source .venv/bin/activate && maturin develop --uv
 	source .venv/bin/activate && maturin develop --uv
 
 install-release: .venv
 	unset CONDA_PREFIX && \
 	source .venv/bin/activate && maturin develop --uv --release
-	source .venv/bin/activate && maturin develop --uv --release
 
 pre-commit: .venv
-	uv run pre-commit install
-	uv run pre-commit run --all-files
-	uv run mypy polars_iptools tests
 	uv run pre-commit install
 	uv run pre-commit run --all-files
 	uv run mypy polars_iptools tests
@@ -38,8 +32,6 @@ test-matrix: .venv
 
 run: install
 	uv run run.py
-	uv run run.py
 
 run-release: install-release
-	uv run run.py
 	uv run run.py
