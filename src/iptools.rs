@@ -1,6 +1,6 @@
 #![allow(clippy::unused_unit)]
 use ipnet::{IpNet, Ipv4Net, Ipv6Net};
-use iptrie::{IpPrefix, RTrieSet};
+use iptrie::{set::RTrieSet, IpPrefix};
 use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use std::net::{IpAddr, Ipv4Addr};

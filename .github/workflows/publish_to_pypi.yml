@@ -2,151 +2,235 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - master
+    # Only trigger push events for tags now, REMOVING main branch trigger
+    # branches:
+    #   - main # Removed: No thorough checks on main push
     tags:
-      - "*"
-  pull_request:
-  workflow_dispatch:
+      - "*" # Trigger on tag push for release
+  pull_request: # Trigger for PR lite checks
+  workflow_dispatch: # Trigger for manual release run
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: read # Default read-only permissions
 
 # Make sure CI fails on all warnings, including Clippy lints
 env:
   RUSTFLAGS: "-Dwarnings"
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
 
 jobs:
-  linux_tests:
+  # ------------------------------------------------------------------
+  # Lite Validation for Pull Requests ONLY
+  # ------------------------------------------------------------------
+  test-pr:
+    name: Test PR (Ubuntu, Python ${{ matrix.python-version }})
+    # Run ONLY for pull request events
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        target: [x86_64]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        # Minimal matrix for quick PR feedback
+        python-version: ["3.9", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - name: Install uv with cache
+      - name: Install uv and Python
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.5.16"
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
           python-version: ${{ matrix.python-version }}
-
-      - name: Set up Rust
-        run: rustup show
-      - uses: mozilla-actions/sccache-action@v0.0.7
-
-      - name: Install project
+      - name: Set up Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          shared-key: "build-cache-pr-${{ runner.os }}-${{ matrix.python-version }}"
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+      - name: Install the project
         run: uv sync --all-extras --dev
-
       - name: Run tests
-        run: uv run pytest tests
-      - uses: mozilla-actions/sccache-action@v0.0.7
+        run: uv run pytest tests -v
 
-  linux:
+  # ------------------------------------------------------------------
+  # Thorough Validation & Build - ONLY for Release (Tags/Dispatch)
+  # ------------------------------------------------------------------
+  test-thorough:
+    name: Test Thorough (Ubuntu, Python ${{ matrix.python-version }})
+    # Run ONLY on tag push or manual dispatch (Release Trigger)
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        target: [x86_64, x86]
+        # Full Python matrix for release validation
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.10"
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
+          python-version: ${{ matrix.python-version }}
+      - name: Set up Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
         with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter
-          sccache: "true"
-          manylinux: auto
-      - name: Upload wheels
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: dist
+          shared-key: "build-cache-thorough-${{ runner.os }}-${{ matrix.python-version }}"
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+      - name: Install the project
+        run: uv sync --all-extras --dev
+      - name: Run tests
+        run: uv run pytest tests -v
 
-  windows:
-    runs-on: windows-latest
+  min-versions-test:
+    name: Test Min Versions (Python 3.9)
+    # Run ONLY on tag push or manual dispatch (Release Trigger)
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    needs: test-thorough # Depend on thorough tests for release
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv and Python 3.9
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.9"
+      - name: Set up Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+      - name: Install with minimum dependencies
+        run: |
+          uv sync --all-extras --dev
+          uv lock --upgrade-package polars==1.3.0
+      - name: Run tests with minimum versions
+        run: uv run pytest tests -v
+
+  build-wheels:
+    name: Build Wheels (${{ matrix.os }}, ${{ matrix.target }})
+    # Run ONLY on tag push or manual dispatch (Release Trigger)
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    needs: test-thorough # Depend on thorough tests for release
     strategy:
+      fail-fast: false
       matrix:
-        target: [x64]
+        # Keep full build matrix for releases
+        include:
+          - os: ubuntu-22.04
+            target: x86_64
+            python: "3.9"
+            manylinux: auto
+          - os: ubuntu-22.04
+            target: aarch64
+            python: "3.9"
+            manylinux: auto
+          - os: macos-13
+            target: x86_64
+            python: "3.9"
+          - os: macos-14
+            target: aarch64
+            python: "3.9"
+          - os: windows-latest
+            target: x64
+            python: "3.9"
+    runs-on: ${{ matrix.os }}
     steps:
+      # Steps remain the same as before...
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
-          architecture: ${{ matrix.target }}
-
+          python-version: ${{ matrix.python }}
+          architecture: ${{ (matrix.target == 'aarch64' && 'arm64') || (matrix.target == 'x64' && 'x64') || matrix.target }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        # with: # Add target if needed
+        #   target: ${{ matrix.target == 'aarch64' && 'aarch64-unknown-linux-gnu' || matrix.target == 'x86_64' && 'x86_64-unknown-linux-gnu' || '' }}
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          shared-key: "build-cache-build-${{ runner.os }}-${{ matrix.target }}"
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+      - name: Install Maturin
+        run: uv tool install maturin
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter
+          args: --release --out dist
           sccache: "true"
+          manylinux: ${{ matrix.manylinux || 'off' }}
       - name: Upload wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
-          path: dist
-
-  macos:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        target: [x86_64, aarch64]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter
-          sccache: "true"
-      - name: Upload wheels
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: dist
+          name: wheels-${{ runner.os }}-${{ matrix.target }}
+          path: dist/*.whl
+          compression-level: 9
 
   sdist:
+    name: Build Sdist
+    # Run ONLY on tag push or manual dispatch (Release Trigger)
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    needs: test-thorough # Depend on thorough tests for release
     steps:
+      # Steps remain the same as before...
       - uses: actions/checkout@v4
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.9"
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
           args: --out dist
       - name: Upload sdist
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
-          path: dist
+          name: wheels-sdist
+          path: dist/*.tar.gz
+          compression-level: 9
 
+  # ------------------------------------------------------------------
+  # Release Job - ONLY for Release (Tags/Dispatch)
+  # ------------------------------------------------------------------
   release:
-    name: Release
-    if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [linux, windows, macos, sdist]
+    name: Release to PyPI
     runs-on: ubuntu-latest
+    # Run ONLY on new tags OR manual dispatch (Release Trigger)
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    # Needs all build artifacts AND min-versions check from the release run
+    needs: [build-wheels, sdist, min-versions-test]
     environment: pypi
     permissions:
-      id-token: write # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+      contents: write
+      attestations: write
     steps:
-      - uses: actions/download-artifact@v3
+      # Steps remain the same as before...
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: wheels
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: "dist/**/*"
       - name: Publish to PyPI
         uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
           command: upload
-          args: --non-interactive --skip-existing *
+          args: --non-interactive --skip-existing dist/*
