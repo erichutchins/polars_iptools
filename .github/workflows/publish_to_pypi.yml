@@ -51,9 +51,8 @@ jobs:
           shared-key: "build-cache-pr-${{ runner.os }}-${{ matrix.python-version }}"
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.9
-      - name: Install dependencies
-        run: |
-          uv pip install --system pytest
+      - name: Install the project
+        run: uv sync --all-extras --dev
       - name: Run tests
         run: uv run pytest tests -v
 
@@ -84,9 +83,8 @@ jobs:
           shared-key: "build-cache-thorough-${{ runner.os }}-${{ matrix.python-version }}"
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.9
-      - name: Install dependencies
-        run: |
-          uv pip install --system pytest
+      - name: Install the project
+        run: uv sync --all-extras --dev
       - name: Run tests
         run: uv run pytest tests -v
 
@@ -108,7 +106,8 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.9
       - name: Install with minimum dependencies
         run: |
-          uv pip install --system pytest polars==1.3.0
+          uv sync --all-extras --dev
+          uv lock --upgrade-package polars==1.3.0
       - name: Run tests with minimum versions
         run: uv run pytest tests -v
 
@@ -161,7 +160,7 @@ jobs:
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.9
       - name: Install Maturin
-        run: uv pip install --system maturin
+        run: uv tool install maturin
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:

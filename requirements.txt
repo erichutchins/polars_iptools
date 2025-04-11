@@ -12,13 +12,13 @@ packaging==24.2
     # via pytest
 pluggy==1.5.0
     # via pytest
-polars==1.27.0
+polars==1.27.1
     # via polars-iptools (pyproject.toml)
 pytest==8.3.5
     # via polars-iptools (pyproject.toml)
-ruff==0.11.4
+ruff==0.11.5
     # via polars-iptools (pyproject.toml)
-typing-extensions==4.13.1
+typing-extensions==4.13.2
     # via mypy
 uv==0.6.14
     # via polars-iptools (pyproject.toml)
