@@ -5,15 +5,33 @@ build-backend = "maturin"
 [project]
 name = "polars-iptools"
 description = "Polars extension for IP address parsing and enrichment including geolocation"
-keywords = ["polars", "dfir", "geoip"]
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["polars", "dfir", "geoip", "ip-address", "geolocation"]
 requires-python = ">=3.9"
 dynamic = ["version"]
 classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = ["polars>=1.3.0"]
+
+[project.urls]
+Homepage = "https://github.com/erichutchins/polars_iptools"
+Repository = "https://github.com/erichutchins/polars_iptools"
+Issues = "https://github.com/erichutchins/polars_iptools/issues"
 
 [tool.pyright]
 venvPath = "."
@@ -38,8 +56,8 @@ tests = "python -m pytest tests"
 line-length = 88
 fix = true
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "hatch>=1.14.0",
     "maturin>=1.0,<2.0",
     "mypy>=1.11.2",
