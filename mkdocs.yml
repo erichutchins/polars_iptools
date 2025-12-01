@@ -1,0 +1,40 @@
+site_name: Polars IPTools
+site_description: Polars extension for IP address parsing and enrichment including geolocation
+site_url: https://erichutchins.github.io/polars_iptools/
+repo_url: https://github.com/erichutchins/polars_iptools
+repo_name: erichutchins/polars_iptools
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Examples: examples.md
+  - Configuration: configuration.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - attr_list

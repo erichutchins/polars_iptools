@@ -65,3 +65,6 @@ dev = [
     "pytest>=8.3.3",
     "ruff>=0.9.6",
 ]
+docs = [
+    "mkdocs-material>=9.7.0",
+]
