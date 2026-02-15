@@ -1,12 +1,11 @@
 #![allow(clippy::unused_unit)]
-use lazy_static::lazy_static;
 use maxminddb::{geoip2, Mmap, Reader};
 use polars::prelude::*;
 use std::env;
 use std::io;
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 
 // Define the fields and types that we will support
 pub const MAXMIND_FIELDS: [(&str, DataType); 12] = [
@@ -60,13 +59,10 @@ impl Default for MaxmindIPResult<'_> {
     }
 }
 
-// Mutex implementation and error handling improvements provided
-// by ChatGPT on 20240717 using GPT-4o
+// Modern Rust 2021+ approach using OnceLock instead of lazy_static
 // This instantiates a lazily loaded global connection to MaxMind
 // mmdb database files for re-use
-lazy_static! {
-    pub static ref MAXMIND_DB: Mutex<Option<Result<MaxMindDB, PolarsError>>> = Mutex::new(None);
-}
+static MAXMIND_DB: OnceLock<Mutex<Result<MaxMindDB, PolarsError>>> = OnceLock::new();
 
 /// Object to hold connections to ASN and City MaxMind MMDB readers
 #[derive(Debug)]
@@ -76,7 +72,7 @@ pub struct MaxMindDB {
 }
 
 /// Helper function to locate the MaxMind MMDB directory on the system
-/// deferring foremost to the environment variable MAXMIND_MMDB_DIR and
+/// deferring foremost to the environment variable `MAXMIND_MMDB_DIR` and
 /// then checking two other popular locations (for Mac/Linux systems).
 /// Windows clients will have to use the env variable
 fn get_mmdb_dir() -> Result<PathBuf, io::Error> {
@@ -108,68 +104,68 @@ fn get_mmdb_dir() -> Result<PathBuf, io::Error> {
 impl MaxMindDB {
     /// Initialize the lookup readers by locating directory containing
     /// MaxMind mmdb files and opening ASN and City readers. If directories are not
-    /// found or mmdb files could not be opened, raise a PolarsCompute
+    /// found or mmdb files could not be opened, raise a `PolarsCompute`
     /// error so it propagates back up to the python user
     fn initialize() -> PolarsResult<Self> {
-        let mmdb_dir_result = get_mmdb_dir();
-
-        if mmdb_dir_result.is_err() {
-            let error_message = "Error could not locate a directory for MaxMind MMDB files\n\
-                        Hint: specify a directory with the environment variable MAXMIND_MMDB_DIR\n";
-            return Err(PolarsError::ComputeError(error_message.into()));
-        }
-
-        let mmdb_dir = mmdb_dir_result.unwrap();
+        let mmdb_dir = get_mmdb_dir().map_err(|_| {
+            PolarsError::ComputeError(
+                "Error could not locate a directory for MaxMind MMDB files\n\
+                 Hint: specify a directory with the environment variable MAXMIND_MMDB_DIR\n"
+                    .into(),
+            )
+        })?;
 
         let asn_path = Path::new(&mmdb_dir).join("GeoLite2-ASN.mmdb");
         let city_path = Path::new(&mmdb_dir).join("GeoLite2-City.mmdb");
 
-        let asn_reader = Reader::open_mmap(&asn_path);
-        let city_reader = Reader::open_mmap(&city_path);
+        let asn_reader = Reader::open_mmap(&asn_path).map_err(|e| {
+            PolarsError::ComputeError(
+                format!(
+                    "Could not open ASN MMDB file from {}: {}",
+                    asn_path.to_str().unwrap_or_default(),
+                    e
+                )
+                .into(),
+            )
+        })?;
 
-        if asn_reader.is_err() {
-            let error_message = format!(
-                "Could not open ASN MMDB file from {}",
-                asn_path.to_str().unwrap_or_default()
-            );
-            return Err(PolarsError::ComputeError(error_message.into()));
-        }
-
-        if city_reader.is_err() {
-            let error_message = format!(
-                "Could not open City MMDB file from {}",
-                city_path.to_str().unwrap_or_default()
-            );
-            return Err(PolarsError::ComputeError(error_message.into()));
-        }
+        let city_reader = Reader::open_mmap(&city_path).map_err(|e| {
+            PolarsError::ComputeError(
+                format!(
+                    "Could not open City MMDB file from {}: {}",
+                    city_path.to_str().unwrap_or_default(),
+                    e
+                )
+                .into(),
+            )
+        })?;
 
         Ok(Self {
-            asn_reader: asn_reader.unwrap(),
-            city_reader: city_reader.unwrap(),
+            asn_reader,
+            city_reader,
         })
     }
 
     /// Force a reinitialization of the MMDB readers by dropping
-    /// the existing global reader and invoking initialize() again.
+    /// the existing global reader and invoking `initialize()` again.
     /// This is helpful, particularly in an interactive session (e.g., Jupyter)
-    /// and the user has changed MAXMIND_MMDB_DIR setting or updated
+    /// and the user has changed `MAXMIND_MMDB_DIR` setting or updated
     /// the MaxMind mmdb files themselves
     pub fn reload() -> PolarsResult<()> {
-        let mut db = MAXMIND_DB.lock().unwrap();
-        *db = Some(Self::initialize());
+        let db = MAXMIND_DB.get_or_init(|| Mutex::new(Self::initialize()));
+        let mut guard = db
+            .lock()
+            .map_err(|_| PolarsError::ComputeError("Failed to acquire MaxMindDB lock".into()))?;
+        *guard = Self::initialize();
         Ok(())
     }
 
-    /// Modeling OnceLock's get_or_init, gets the global mmdb reader,
-    /// initializing it first if necessary
-    pub fn get_or_init(
-    ) -> PolarsResult<std::sync::MutexGuard<'static, Option<Result<Self, PolarsError>>>> {
-        // Credit to GPT-4o for writing this method on 20240717
-        let mut db = MAXMIND_DB.lock().unwrap();
-        if db.is_none() {
-            *db = Some(Self::initialize());
-        }
-        Ok(db)
+    /// Gets the global mmdb reader, initializing it first if necessary
+    pub fn get_or_init() -> PolarsResult<std::sync::MutexGuard<'static, Result<Self, PolarsError>>>
+    {
+        let db = MAXMIND_DB.get_or_init(|| Mutex::new(Self::initialize()));
+        db.lock()
+            .map_err(|_| PolarsError::ComputeError("Failed to acquire MaxMindDB lock".into()))
     }
 
     pub fn asn_reader(&self) -> &Reader<Mmap> {

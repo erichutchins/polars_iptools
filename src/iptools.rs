@@ -7,6 +7,7 @@ use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
 
 /// Returns true if this is a valid IPv4 or IPv6 address
+#[inline]
 #[polars_expr(output_type=Boolean)]
 fn pl_is_valid(inputs: &[Series]) -> PolarsResult<Series> {
     let ca: &StringChunked = inputs[0].str()?;
@@ -16,6 +17,7 @@ fn pl_is_valid(inputs: &[Series]) -> PolarsResult<Series> {
 }
 
 /// Returns true if this is a private IPv4 address defined in IETF RFC 1918
+#[inline]
 #[polars_expr(output_type=Boolean)]
 fn pl_is_private(inputs: &[Series]) -> PolarsResult<Series> {
     let ca: &StringChunked = inputs[0].str()?;
@@ -34,7 +36,7 @@ fn pl_ipv4_to_numeric(inputs: &[Series]) -> PolarsResult<Series> {
     let mut builder: PrimitiveChunkedBuilder<UInt32Type> =
         PrimitiveChunkedBuilder::new(PlSmallStr::from_static("ipv4_numeric"), ca.len());
 
-    for opt_value in ca.into_iter() {
+    for opt_value in ca {
         if let Some(value) = opt_value {
             match value.parse::<std::net::Ipv4Addr>() {
                 Ok(ipv4) => {
@@ -57,7 +59,7 @@ fn pl_numeric_to_ipv4(inputs: &[Series]) -> PolarsResult<Series> {
     let ca: &UInt32Chunked = inputs[0].u32()?;
     let mut builder = StringChunkedBuilder::new(PlSmallStr::from_static("ipv4_string"), ca.len());
 
-    for opt_value in ca.into_iter() {
+    for opt_value in ca {
         if let Some(num) = opt_value {
             let ip = Ipv4Addr::from(num);
             builder.append_value(ip.to_string());
@@ -76,16 +78,16 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
     let ca2: &StringChunked = inputs[1].str()?; // ip networks/cidrs
 
     let mut ipv4_rtrie: RTrieSet<Ipv4Net> = RTrieSet::with_capacity(ca2.len());
-    let mut ipv6_rtrie: RTrieSet<Ipv6Net> = RTrieSet::new();
+    let mut ipv6_rtrie: RTrieSet<Ipv6Net> = RTrieSet::with_capacity(ca2.len());
 
     // Iterate over ca2, parse as IP range, and add it to the appropriate trie
     for cidr in ca2.into_iter().flatten() {
         match IpNet::from_str(cidr) {
             Ok(IpNet::V4(ipv4)) => {
-                _ = ipv4_rtrie.insert(ipv4);
+                ipv4_rtrie.insert(ipv4);
             },
             Ok(IpNet::V6(ipv6)) => {
-                _ = ipv6_rtrie.insert(ipv6);
+                ipv6_rtrie.insert(ipv6);
             },
             Err(_) => {
                 polars_bail!(InvalidOperation: "Invalid CIDR range: {}", cidr);
@@ -100,7 +102,7 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
     // Prepare builder to collect results
     let mut builder = BooleanChunkedBuilder::new(PlSmallStr::from_static("is_in"), ca1.len());
 
-    for opt_value in ca1.into_iter() {
+    for opt_value in ca1 {
         if let Some(value) = opt_value {
             match IpAddr::from_str(value) {
                 Ok(ip) => {

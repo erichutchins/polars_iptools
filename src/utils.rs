@@ -9,24 +9,22 @@ pub struct MMDBKwargs {
     pub reload_mmdb: bool,
 }
 
-/// BuilderWrapper is an enum that wraps different types of Polars ChunkedBuilders.
+/// `BuilderWrapper` is an enum that wraps different types of Polars `ChunkedBuilders`.
 /// It provides a unified interface for appending values and handling nulls across
 /// different data types, simplifying the process of building Series with mixed types.
 /// This allows for creating a vec/array of disparate builder types, enabling
 /// flexible handling of multiple data types within a single collection.
-///
-/// Adding ListString variant was beyond my rust skills, but leaving its commented
-/// components for future reference (or more skill contributor)
 pub enum BuilderWrapper {
     UInt32(PrimitiveChunkedBuilder<UInt32Type>),
     Float32(PrimitiveChunkedBuilder<Float32Type>),
     Float64(PrimitiveChunkedBuilder<Float64Type>),
     String(StringChunkedBuilder),
-    // ListString(ListStringChunkedBuilder),
+    ListString(ListStringChunkedBuilder),
     Invalid(NullChunkedBuilder),
 }
 
 impl BuilderWrapper {
+    #[inline]
     pub fn append_value<'a, T>(&mut self, value: T)
     where
         T: Into<AnyValue<'a>>,
@@ -35,60 +33,64 @@ impl BuilderWrapper {
         match self {
             BuilderWrapper::UInt32(b) => {
                 if let AnyValue::UInt32(v) = any_value {
-                    b.append_value(v)
+                    b.append_value(v);
                 } else {
-                    b.append_null()
+                    b.append_null();
                 }
             },
             BuilderWrapper::Float32(b) => {
                 if let AnyValue::Float32(v) = any_value {
-                    b.append_value(v)
+                    b.append_value(v);
                 } else {
-                    b.append_null()
+                    b.append_null();
                 }
             },
             BuilderWrapper::Float64(b) => {
                 if let AnyValue::Float64(v) = any_value {
-                    b.append_value(v)
+                    b.append_value(v);
                 } else {
-                    b.append_null()
+                    b.append_null();
                 }
             },
             BuilderWrapper::String(b) => {
                 if let AnyValue::String(v) = any_value {
-                    b.append_value(v)
+                    b.append_value(v);
                 } else {
-                    b.append_null()
+                    b.append_null();
                 }
             },
+            BuilderWrapper::ListString(_) => {
+                // ListString has a different API - use append_option_string_vec instead
+                panic!("Use append_option_string_vec for ListString variant, not append_value")
+            },
             BuilderWrapper::Invalid(b) => b.append_null(),
-            // BuilderWrapper::ListString(b) => {
-            //     if let AnyValue::List(v) = any_value {
-            //         let string_iter = v.iter().filter_map(|av| match av {
-            //             AnyValue::String(s) => Some(s),
-            //             _ => None,
-            //         });
-            //         b.append_values_iter(string_iter);
-            //     } else {
-            //         b.append_null()
-            //     }
-            // }
-            // BuilderWrapper::ListString(b) => {
-            //     // Special handling for Vec<&str>
-            //     let string_slice = value.as_ref();
-            //     let string_iter = string_slice.iter().copied();
-            //     b.append_values_iter(string_iter);
-            // }
         }
     }
 
+    /// Specialized method for appending Option<&Vec<&str>> to `ListString` builders
+    /// This is the proper way to append lists of strings
+    #[inline]
+    pub fn append_option_string_vec(&mut self, opt_vec: Option<&Vec<&str>>) {
+        match self {
+            BuilderWrapper::ListString(b) => {
+                if let Some(vec) = opt_vec {
+                    b.append_values_iter(vec.iter().copied());
+                } else {
+                    b.append_null();
+                }
+            },
+            _ => panic!("append_option_string_vec called on non-ListString variant"),
+        }
+    }
+
+    #[inline]
     pub fn append_null(&mut self) {
         match self {
             BuilderWrapper::UInt32(b) => b.append_null(),
             BuilderWrapper::Float32(b) => b.append_null(),
             BuilderWrapper::Float64(b) => b.append_null(),
             BuilderWrapper::String(b) => b.append_null(),
-            // BuilderWrapper::ListString(b) => b.append_null(),
+            BuilderWrapper::ListString(b) => b.append_null(),
             BuilderWrapper::Invalid(b) => b.append_null(),
         }
     }
@@ -99,7 +101,7 @@ impl BuilderWrapper {
             BuilderWrapper::Float32(b) => b.finish().into_series(),
             BuilderWrapper::Float64(b) => b.finish().into_series(),
             BuilderWrapper::String(b) => b.finish().into_series(),
-            // BuilderWrapper::ListString(mut b) => b.finish().into_series(),
+            BuilderWrapper::ListString(mut b) => b.finish().into_series(),
             BuilderWrapper::Invalid(b) => b.finish().into_series(),
         }
     }
@@ -126,11 +128,15 @@ pub fn create_builders<'a, const N: usize>(
                 PlSmallStr::from_str(name),
                 capacity,
             )),
-            // DataType::List(inner_type) if matches!(**inner_type, DataType::String) => {
-            //     BuilderWrapper::ListString(ListStringChunkedBuilder::new(name, capacity, 4))
-            // }
+            DataType::List(inner_type) if matches!(**inner_type, DataType::String) => {
+                BuilderWrapper::ListString(ListStringChunkedBuilder::new(
+                    PlSmallStr::from_str(name),
+                    capacity,
+                    4, // initial values_capacity per list
+                ))
+            },
             _ => {
-                let error_name = format!("{}_error", name);
+                let error_name = format!("{name}_error");
                 BuilderWrapper::Invalid(NullChunkedBuilder::new(
                     PlSmallStr::from_str(error_name.as_str()),
                     capacity,

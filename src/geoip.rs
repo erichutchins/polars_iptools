@@ -25,14 +25,10 @@ fn pl_full_geoip(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> 
         MaxMindDB::reload()?;
     }
 
-    let binding = MaxMindDB::get_or_init()?;
-    let mdb = binding
-            .as_ref()
-            .ok_or_else(|| PolarsError::ComputeError("Error: MaxMindDB is not initialized. Please ensure that the MMDB files are correctly placed and accessible.".into()))?
-            .as_ref()
-            .map_err(|e| {
-                PolarsError::ComputeError(format!("Failed to initialize MaxMindDB: {}", e).into())
-            })?;
+    let guard = MaxMindDB::get_or_init()?;
+    let mdb = guard.as_ref().map_err(|e| {
+        PolarsError::ComputeError(format!("Failed to initialize MaxMindDB: {}", e).into())
+    })?;
 
     let ca: &StringChunked = inputs[0].str()?;
 
@@ -59,15 +55,15 @@ fn pl_full_geoip(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> 
                 builders[11].append_value(geoipresult.timezone);
             } else {
                 // invalid ip, so append nulls for everything
-                builders
-                    .iter_mut()
-                    .for_each(|builder| builder.append_null());
+                for builder in &mut builders {
+                    builder.append_null();
+                }
             }
         } else {
             // null input, so append nulls for everything
-            builders
-                .iter_mut()
-                .for_each(|builder| builder.append_null());
+            for builder in &mut builders {
+                builder.append_null();
+            }
         }
     });
 
@@ -83,14 +79,10 @@ fn pl_get_asn(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
         MaxMindDB::reload()?;
     }
 
-    let binding = MaxMindDB::get_or_init()?;
-    let mdb = binding
-        .as_ref()
-        .ok_or_else(|| PolarsError::ComputeError("MaxMindDB is not initialized".into()))?
-        .as_ref()
-        .map_err(|_| {
-            PolarsError::ComputeError("Failed to initialize MaxMindDB in map_err closure".into())
-        })?;
+    let guard = MaxMindDB::get_or_init()?;
+    let mdb = guard.as_ref().map_err(|e| {
+        PolarsError::ComputeError(format!("Failed to initialize MaxMindDB: {e}").into())
+    })?;
 
     let asn_reader = mdb.asn_reader();
 
@@ -105,9 +97,9 @@ fn pl_get_asn(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
                 let asnnum = asnrecord.autonomous_system_number.unwrap_or(0);
                 let asnorg = asnrecord.autonomous_system_organization.unwrap_or("");
                 if asnorg.is_empty() {
-                    write!(output, "AS{}", asnnum).unwrap()
+                    let _ = write!(output, "AS{asnnum}");
                 } else {
-                    write!(output, "AS{} {}", asnnum, asnorg).unwrap()
+                    let _ = write!(output, "AS{asnnum} {asnorg}");
                 }
             }
         }
