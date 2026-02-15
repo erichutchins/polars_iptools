@@ -93,7 +93,11 @@ fn pl_get_asn(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
             // only emit ASN information if we have a) a valid IP and b) it exists
             // in the asn mmdb. if it's a valid ip but not in the mmdb (e.g. private IPs),
             // still leave the output blank
-            if let Ok(asnrecord) = asn_reader.lookup::<geoip2::Asn>(ip) {
+            if let Some(asnrecord) = asn_reader
+                .lookup(ip)
+                .ok()
+                .and_then(|lookup| lookup.decode::<geoip2::Asn>().ok().flatten())
+            {
                 let asnnum = asnrecord.autonomous_system_number.unwrap_or(0);
                 let asnorg = asnrecord.autonomous_system_organization.unwrap_or("");
                 if asnorg.is_empty() {

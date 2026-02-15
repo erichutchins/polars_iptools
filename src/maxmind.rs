@@ -118,7 +118,7 @@ impl MaxMindDB {
         let asn_path = Path::new(&mmdb_dir).join("GeoLite2-ASN.mmdb");
         let city_path = Path::new(&mmdb_dir).join("GeoLite2-City.mmdb");
 
-        let asn_reader = Reader::open_mmap(&asn_path).map_err(|e| {
+        let asn_reader = unsafe { Reader::open_mmap(&asn_path) }.map_err(|e| {
             PolarsError::ComputeError(
                 format!(
                     "Could not open ASN MMDB file from {}: {}",
@@ -129,7 +129,7 @@ impl MaxMindDB {
             )
         })?;
 
-        let city_reader = Reader::open_mmap(&city_path).map_err(|e| {
+        let city_reader = unsafe { Reader::open_mmap(&city_path) }.map_err(|e| {
             PolarsError::ComputeError(
                 format!(
                     "Could not open City MMDB file from {}: {}",
@@ -180,93 +180,60 @@ impl MaxMindDB {
         let mut result = MaxmindIPResult::default();
 
         // Lookup ASN information
-        if let Ok(asn) = self.asn_reader.lookup::<geoip2::Asn>(ip) {
+        if let Some(asn) = self
+            .asn_reader
+            .lookup(ip)
+            .ok()
+            .and_then(|lookup| lookup.decode::<geoip2::Asn>().ok().flatten())
+        {
             result.asnnum = asn.autonomous_system_number.unwrap_or(0);
             result.asnorg = asn.autonomous_system_organization.unwrap_or("");
         }
 
         // Lookup City information
-        if let Ok(city_result) = self.city_reader.lookup::<geoip2::City>(ip) {
-            // as_ref() and &**s magic provided by ChatGPT on 20240825 using GPT-4o
-            result.city = city_result
-                .city
-                .as_ref()
-                .and_then(|city| {
-                    city.names
-                        .as_ref()
-                        .and_then(|names| names.get("en").map(|s| &**s))
-                })
-                .unwrap_or("");
+        if let Some(city_result) = self
+            .city_reader
+            .lookup(ip)
+            .ok()
+            .and_then(|lookup| lookup.decode::<geoip2::City>().ok().flatten())
+        {
+            // Extract city name (english locale)
+            result.city = city_result.city.names.english.unwrap_or("");
 
-            result.continent = city_result
-                .continent
-                .as_ref()
-                .and_then(|continent| {
-                    continent
-                        .names
-                        .as_ref()
-                        .and_then(|names| names.get("en").map(|s| &**s))
-                })
-                .unwrap_or("");
+            // Extract continent code
+            result.continent = city_result.continent.code.unwrap_or("");
 
-            result.country = city_result
-                .country
-                .as_ref()
-                .and_then(|country| {
-                    country
-                        .names
-                        .as_ref()
-                        .and_then(|names| names.get("en").map(|s| &**s))
-                })
-                .unwrap_or("");
+            // Extract country name (english locale)
+            result.country = city_result.country.names.english.unwrap_or("");
 
-            result.country_iso = city_result
-                .country
-                .as_ref()
-                .and_then(|country| country.iso_code)
-                .unwrap_or("");
+            // Extract country ISO code
+            result.country_iso = city_result.country.iso_code.unwrap_or("");
 
-            result.latitude = city_result
-                .location
-                .as_ref()
-                .and_then(|loc| loc.latitude)
-                .unwrap_or(0.0);
+            // Extract latitude
+            result.latitude = city_result.location.latitude.unwrap_or(0.0);
 
-            result.longitude = city_result
-                .location
-                .as_ref()
-                .and_then(|loc| loc.longitude)
-                .unwrap_or(0.0);
+            // Extract longitude
+            result.longitude = city_result.location.longitude.unwrap_or(0.0);
 
-            result.postalcode = city_result
-                .postal
-                .as_ref()
-                .and_then(|postal| postal.code)
-                .unwrap_or("");
+            // Extract postal code
+            result.postalcode = city_result.postal.code.unwrap_or("");
 
+            // Extract subdivision name (english locale) from first subdivision
             result.subdivision = city_result
                 .subdivisions
-                .as_ref()
-                .and_then(|subs| {
-                    subs.first().and_then(|sub| {
-                        sub.names
-                            .as_ref()
-                            .and_then(|names| names.get("en").map(|s| &**s))
-                    })
-                })
+                .first()
+                .and_then(|sub| sub.names.english)
                 .unwrap_or("");
 
+            // Extract subdivision ISO code from first subdivision
             result.subdivision_iso = city_result
                 .subdivisions
-                .as_ref()
-                .and_then(|subs| subs.first().and_then(|sub| sub.iso_code))
+                .first()
+                .and_then(|sub| sub.iso_code)
                 .unwrap_or("");
 
-            result.timezone = city_result
-                .location
-                .as_ref()
-                .and_then(|loc| loc.time_zone)
-                .unwrap_or("");
+            // Extract timezone
+            result.timezone = city_result.location.time_zone.unwrap_or("");
         }
 
         result

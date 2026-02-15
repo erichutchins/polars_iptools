@@ -120,7 +120,7 @@ impl SpurDB {
         })?;
 
         let spur_path = Path::new(&mmdb_dir).join("spur.mmdb");
-        let spur_reader = Reader::open_mmap(&spur_path).map_err(|e| {
+        let spur_reader = unsafe { Reader::open_mmap(&spur_path) }.map_err(|e| {
             PolarsError::ComputeError(
                 format!(
                     "Could not open Spur MMDB file from {}: {}",
@@ -160,7 +160,12 @@ impl SpurDB {
         let mut result = SpurResult::default();
 
         // Lookup spur information
-        if let Ok(record) = self.spur_reader.lookup::<SpurLookupResult>(ip) {
+        if let Some(record) = self
+            .spur_reader
+            .lookup(ip)
+            .ok()
+            .and_then(|lookup| lookup.decode::<SpurLookupResult>().ok().flatten())
+        {
             // Populate the SpurLookupResult fields
             result.client_count = record.clientCount.unwrap_or_default();
             result.infrastructure = record.infrastructure.unwrap_or_default();

@@ -11,14 +11,14 @@ name = "polars_iptools"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.26.0", features = ["extension-module", "abi3-py39"] }
-pyo3-polars = { version = "0.25.0", features = [
+pyo3 = { version = "0.27.0", features = ["extension-module", "abi3-py39"] }
+pyo3-polars = { version = "0.26.0", features = [
     "derive",
     "dtype-struct",
     "lazy",
 ] }
 serde = { version = "1", features = ["derive"] }
-polars = { version = "0.52", features = [
+polars = { version = "0.53", features = [
     "performant",
     "lazy",
     "array_count",
@@ -26,11 +26,10 @@ polars = { version = "0.52", features = [
     "dtype-array",
     "dtype-struct",
 ], default-features = false }
-maxminddb = { version = "0.25.0", features = ["mmap"] }
-lazy_static = "1.5.0"
-iptrie = "0.10.3"
+polars-arrow = "0.53.0"
+maxminddb = { version = "0.27.2", features = ["mmap"] }
+iptrie = "0.11.1"
 ipnet = "2.11.0"
-polars-arrow = "0.52.0"
 thiserror = "2.0"
 
 [dev-dependencies]
