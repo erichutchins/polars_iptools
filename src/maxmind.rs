@@ -118,6 +118,8 @@ impl MaxMindDB {
         let asn_path = Path::new(&mmdb_dir).join("GeoLite2-ASN.mmdb");
         let city_path = Path::new(&mmdb_dir).join("GeoLite2-City.mmdb");
 
+        // SAFETY: The mmap'd file is owned by this process and will not be modified
+        // or deleted while the reader is alive (static lifetime via OnceLock).
         let asn_reader = unsafe { Reader::open_mmap(&asn_path) }.map_err(|e| {
             PolarsError::ComputeError(
                 format!(
@@ -129,6 +131,7 @@ impl MaxMindDB {
             )
         })?;
 
+        // SAFETY: Same as above — file is process-owned and stable for reader lifetime.
         let city_reader = unsafe { Reader::open_mmap(&city_path) }.map_err(|e| {
             PolarsError::ComputeError(
                 format!(
@@ -172,10 +175,6 @@ impl MaxMindDB {
         &self.asn_reader
     }
 
-    // pub fn city_reader(&self) -> &Reader<Mmap> {
-    //     &self.city_reader
-    // }
-
     pub fn iplookup(&self, ip: IpAddr) -> MaxmindIPResult<'_> {
         let mut result = MaxmindIPResult::default();
 
@@ -200,8 +199,8 @@ impl MaxMindDB {
             // Extract city name (english locale)
             result.city = city_result.city.names.english.unwrap_or("");
 
-            // Extract continent code
-            result.continent = city_result.continent.code.unwrap_or("");
+            // Extract continent name
+            result.continent = city_result.continent.names.english.unwrap_or("");
 
             // Extract country name (english locale)
             result.country = city_result.country.names.english.unwrap_or("");

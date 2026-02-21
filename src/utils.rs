@@ -25,7 +25,7 @@ pub enum BuilderWrapper {
 
 impl BuilderWrapper {
     #[inline]
-    pub fn append_value<'a, T>(&mut self, value: T)
+    pub fn append_value<'a, T>(&mut self, value: T) -> PolarsResult<()>
     where
         T: Into<AnyValue<'a>>,
     {
@@ -60,17 +60,16 @@ impl BuilderWrapper {
                 }
             },
             BuilderWrapper::ListString(_) => {
-                // ListString has a different API - use append_option_string_vec instead
-                panic!("Use append_option_string_vec for ListString variant, not append_value")
+                polars_bail!(InvalidOperation: "Use append_option_string_vec for ListString variant, not append_value")
             },
             BuilderWrapper::Invalid(b) => b.append_null(),
         }
+        Ok(())
     }
 
     /// Specialized method for appending Option<&Vec<&str>> to `ListString` builders
-    /// This is the proper way to append lists of strings
     #[inline]
-    pub fn append_option_string_vec(&mut self, opt_vec: Option<&Vec<&str>>) {
+    pub fn append_option_string_vec(&mut self, opt_vec: Option<&Vec<&str>>) -> PolarsResult<()> {
         match self {
             BuilderWrapper::ListString(b) => {
                 if let Some(vec) = opt_vec {
@@ -79,8 +78,11 @@ impl BuilderWrapper {
                     b.append_null();
                 }
             },
-            _ => panic!("append_option_string_vec called on non-ListString variant"),
+            _ => {
+                polars_bail!(InvalidOperation: "append_option_string_vec called on non-ListString variant")
+            },
         }
+        Ok(())
     }
 
     #[inline]

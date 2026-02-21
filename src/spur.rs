@@ -36,37 +36,30 @@ fn pl_full_spur(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> {
     let spur_fields = spur_fields();
     let mut builders = create_builders(&spur_fields, ca.len());
 
-    ca.into_iter().for_each(|op_s| {
+    for op_s in ca.into_iter() {
         if let Some(ip_s) = op_s {
             if let Ok(ip) = ip_s.parse::<IpAddr>() {
                 let spuripresult = mdb.iplookup(ip);
 
-                // Add values to the builders
-                // Important: these must be in same order as SPUR_FIELDS
-                // Sort alphabetically to ensure easier maintenance
-                builders[0].append_value(spuripresult.client_count);
-                builders[1].append_value(spuripresult.infrastructure);
-                builders[2].append_value(spuripresult.location_city);
-                builders[3].append_value(spuripresult.location_country);
-                builders[4].append_value(spuripresult.location_state);
-
-                // Use the specialized method for List<String>
-                builders[5].append_option_string_vec(spuripresult.services.as_ref());
-
-                builders[6].append_value(spuripresult.tag);
+                // Important: these must be in same order as spur_fields()
+                builders[0].append_value(spuripresult.client_count)?;
+                builders[1].append_value(spuripresult.infrastructure)?;
+                builders[2].append_value(spuripresult.location_city)?;
+                builders[3].append_value(spuripresult.location_country)?;
+                builders[4].append_value(spuripresult.location_state)?;
+                builders[5].append_option_string_vec(spuripresult.services.as_ref())?;
+                builders[6].append_value(spuripresult.tag)?;
             } else {
-                // Invalid IP: append nulls for everything
                 for builder in &mut builders {
                     builder.append_null();
                 }
             }
         } else {
-            // Null input: append nulls for everything
             for builder in &mut builders {
                 builder.append_null();
             }
         }
-    });
+    }
 
     // Finalize all builders into series
     let series: Vec<Series> = builders.into_iter().map(BuilderWrapper::finish).collect();

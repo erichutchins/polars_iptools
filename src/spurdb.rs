@@ -2,7 +2,6 @@
 use maxminddb::{Mmap, Reader};
 use polars::prelude::*;
 use serde::Deserialize;
-// use std::borrow::Cow;
 use std::env;
 use std::io;
 use std::net::IpAddr;
@@ -120,6 +119,8 @@ impl SpurDB {
         })?;
 
         let spur_path = Path::new(&mmdb_dir).join("spur.mmdb");
+        // SAFETY: The mmap'd file is owned by this process and will not be modified
+        // or deleted while the reader is alive (static lifetime via OnceLock).
         let spur_reader = unsafe { Reader::open_mmap(&spur_path) }.map_err(|e| {
             PolarsError::ComputeError(
                 format!(

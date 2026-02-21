@@ -27,45 +27,41 @@ fn pl_full_geoip(inputs: &[Series], kwargs: MMDBKwargs) -> PolarsResult<Series> 
 
     let guard = MaxMindDB::get_or_init()?;
     let mdb = guard.as_ref().map_err(|e| {
-        PolarsError::ComputeError(format!("Failed to initialize MaxMindDB: {}", e).into())
+        PolarsError::ComputeError(format!("Failed to initialize MaxMindDB: {e}").into())
     })?;
 
     let ca: &StringChunked = inputs[0].str()?;
 
     let mut builders = create_builders(&MAXMIND_FIELDS, ca.len());
 
-    ca.into_iter().for_each(|op_s| {
+    for op_s in ca.into_iter() {
         if let Some(ip_s) = op_s {
             if let Ok(ip) = ip_s.parse::<IpAddr>() {
                 let geoipresult = mdb.iplookup(ip);
-                // add values to the builders
                 // Important: these must be in same order as MAXMIND_FIELDS
-                // sort alphabetically to ensure
-                builders[0].append_value(geoipresult.asnnum);
-                builders[1].append_value(geoipresult.asnorg);
-                builders[2].append_value(geoipresult.city);
-                builders[3].append_value(geoipresult.continent);
-                builders[4].append_value(geoipresult.country);
-                builders[5].append_value(geoipresult.country_iso);
-                builders[6].append_value(geoipresult.latitude);
-                builders[7].append_value(geoipresult.longitude);
-                builders[8].append_value(geoipresult.postalcode);
-                builders[9].append_value(geoipresult.subdivision);
-                builders[10].append_value(geoipresult.subdivision_iso);
-                builders[11].append_value(geoipresult.timezone);
+                builders[0].append_value(geoipresult.asnnum)?;
+                builders[1].append_value(geoipresult.asnorg)?;
+                builders[2].append_value(geoipresult.city)?;
+                builders[3].append_value(geoipresult.continent)?;
+                builders[4].append_value(geoipresult.country)?;
+                builders[5].append_value(geoipresult.country_iso)?;
+                builders[6].append_value(geoipresult.latitude)?;
+                builders[7].append_value(geoipresult.longitude)?;
+                builders[8].append_value(geoipresult.postalcode)?;
+                builders[9].append_value(geoipresult.subdivision)?;
+                builders[10].append_value(geoipresult.subdivision_iso)?;
+                builders[11].append_value(geoipresult.timezone)?;
             } else {
-                // invalid ip, so append nulls for everything
                 for builder in &mut builders {
                     builder.append_null();
                 }
             }
         } else {
-            // null input, so append nulls for everything
             for builder in &mut builders {
                 builder.append_null();
             }
         }
-    });
+    }
 
     let series: Vec<Series> = builders.into_iter().map(|b| b.finish()).collect();
     StructChunked::from_series(PlSmallStr::from_static("geoip"), ca.len(), series.iter())
