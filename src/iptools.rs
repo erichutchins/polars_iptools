@@ -23,7 +23,7 @@ fn get_ipv4_re() -> &'static Regex {
 
 fn get_all_ip_re() -> &'static Regex {
     ALL_IP_RE.get_or_init(|| {
-        let patt = format!("{}|{}", IPV4_PATT, IPV6_PATT);
+        let patt = format!("{IPV4_PATT}|{IPV6_PATT}");
         Regex::new(&patt).expect("BUG: compiled-in IP regex pattern is invalid")
     })
 }
@@ -330,6 +330,86 @@ pub fn ip_address_dtype(_: &[Field]) -> PolarsResult<Field> {
         PlSmallStr::from_static("ip_address"),
         ip_address_ext_dtype(),
     ))
+}
+
+/// Per-row outcome when converting a Series to IP addresses.
+pub enum IpEntry {
+    /// Source value was null.
+    Null,
+    /// Source value was non-null but could not be parsed as an IP address.
+    Invalid,
+    /// Successfully resolved IP address.
+    Addr(IpAddr),
+}
+
+/// Convert any IP-typed Series (String, IPv4/UInt32, or IPAddress/Binary) to a
+/// `Vec<IpEntry>` so that geoip/spur functions can accept all three input types
+/// without converting back through strings.
+///
+/// The `IpEntry` enum preserves the distinction between a null source value
+/// (`IpEntry::Null`) and a non-null unparseable value (`IpEntry::Invalid`),
+/// allowing callers to emit different outputs for each case.
+///
+/// Extension wrapper types (DataType::Extension) are transparently stripped via
+/// `to_physical_repr()` before dispatch.
+pub fn series_to_ipaddrs(s: &Series) -> PolarsResult<Vec<IpEntry>> {
+    // Strip extension wrapper if present (IPv4 or IPAddress extension types)
+    let physical = s.to_physical_repr();
+    match physical.dtype() {
+        DataType::String => {
+            let ca = physical.str()?;
+            Ok(ca
+                .into_iter()
+                .map(|opt| match opt {
+                    None => IpEntry::Null,
+                    Some(v) => match v.parse::<IpAddr>() {
+                        Ok(ip) => IpEntry::Addr(ip),
+                        Err(_) => IpEntry::Invalid,
+                    },
+                })
+                .collect())
+        },
+        DataType::UInt32 => {
+            // IPv4 extension storage: u32 representing IPv4 address
+            let ca = physical.u32()?;
+            Ok(ca
+                .into_iter()
+                .map(|opt| match opt {
+                    None => IpEntry::Null,
+                    Some(n) => IpEntry::Addr(IpAddr::V4(Ipv4Addr::from(n))),
+                })
+                .collect())
+        },
+        DataType::Binary => {
+            // IPAddress extension storage: 16-byte network-order IPv6 (with
+            // IPv4-mapped addresses stored as ::ffff:a.b.c.d)
+            let ca = physical.binary()?;
+            Ok(ca
+                .into_iter()
+                .map(|opt| match opt {
+                    None => IpEntry::Null,
+                    Some(bytes) => {
+                        if bytes.len() == 16 {
+                            let mut octets = [0u8; 16];
+                            octets.copy_from_slice(bytes);
+                            let ip6 = std::net::Ipv6Addr::from(octets);
+                            let ip = match ip6.to_ipv4_mapped() {
+                                Some(ip4) => IpAddr::V4(ip4),
+                                None => IpAddr::V6(ip6),
+                            };
+                            IpEntry::Addr(ip)
+                        } else {
+                            IpEntry::Invalid
+                        }
+                    },
+                })
+                .collect())
+        },
+        dt => polars_bail!(
+            InvalidOperation: "IP lookup expects String, IPv4, or IPAddress column; got {}",
+            dt
+        ),
+    }
 }
 
 /// Parse string column into IPv4 Extension Type

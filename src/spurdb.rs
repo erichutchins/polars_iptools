@@ -8,17 +8,24 @@ use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
-// Define the fields and types that we will support
-// Note: We use a function instead of const because List with Box::new isn't const-compatible
-pub fn spur_fields() -> [(&'static str, DataType); 7] {
-    [
-        ("client_count", DataType::Float32),
-        ("infrastructure", DataType::String),
-        ("location_city", DataType::String),
-        ("location_country", DataType::String),
-        ("location_state", DataType::String),
-        ("services", DataType::List(Box::new(DataType::String))),
-        ("tag", DataType::String),
+make_builders! {
+    name: SpurBuilders,
+    result: SpurResult<'_>,
+    arg_name: r,
+    fields: [
+        client_count: PrimitiveChunkedBuilder<Float32Type> => DataType::Float32,
+        infrastructure: StringChunkedBuilder => DataType::String,
+        location_city: StringChunkedBuilder => DataType::String,
+        location_country: StringChunkedBuilder => DataType::String,
+        location_state: StringChunkedBuilder => DataType::String,
+        services: ListStringChunkedBuilder => DataType::List(Box::new(DataType::String)), |b| {
+            if let Some(s) = &r.services {
+                b.append_values_iter(s.iter().copied());
+            } else {
+                b.append_null();
+            }
+        },
+        tag: StringChunkedBuilder => DataType::String,
     ]
 }
 

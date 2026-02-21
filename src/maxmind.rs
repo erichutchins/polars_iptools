@@ -7,21 +7,25 @@ use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
-// Define the fields and types that we will support
-pub const MAXMIND_FIELDS: [(&str, DataType); 12] = [
-    ("asnnum", DataType::UInt32),
-    ("asnorg", DataType::String),
-    ("city", DataType::String),
-    ("continent", DataType::String),
-    ("country", DataType::String),
-    ("country_iso", DataType::String),
-    ("latitude", DataType::Float64),
-    ("longitude", DataType::Float64),
-    ("postalcode", DataType::String),
-    ("subdivision", DataType::String),
-    ("subdivision_iso", DataType::String),
-    ("timezone", DataType::String),
-];
+make_builders! {
+    name: MaxmindBuilders,
+    result: MaxmindIPResult<'_>,
+    arg_name: r,
+    fields: [
+        asnnum: PrimitiveChunkedBuilder<UInt32Type> => DataType::UInt32,
+        asnorg: StringChunkedBuilder => DataType::String,
+        city: StringChunkedBuilder => DataType::String,
+        continent: StringChunkedBuilder => DataType::String,
+        country: StringChunkedBuilder => DataType::String,
+        country_iso: StringChunkedBuilder => DataType::String,
+        latitude: PrimitiveChunkedBuilder<Float64Type> => DataType::Float64,
+        longitude: PrimitiveChunkedBuilder<Float64Type> => DataType::Float64,
+        postalcode: StringChunkedBuilder => DataType::String,
+        subdivision: StringChunkedBuilder => DataType::String,
+        subdivision_iso: StringChunkedBuilder => DataType::String,
+        timezone: StringChunkedBuilder => DataType::String,
+    ]
+}
 
 // Define a struct to hold all the fields using &str instead of String
 #[derive(Debug)]
