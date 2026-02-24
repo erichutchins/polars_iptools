@@ -233,6 +233,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36f64beae40a84da1b4b26ff2761a5b895c12adc41dc25aaee1c4f2bbfe97a6e"
 
 [[package]]
+name = "bstr"
+version = "1.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63044e1ae8e69f3b5a92c736ca6269b8d12fa7efe39bf34ddb06d102cf0e2cab"
+dependencies = [
+ "memchr",
+ "regex-automata",
+ "serde",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1173,6 +1184,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ip-extract"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "598f1c9801e2385080d4b9431dcea39844063f3f71edfb04779346168a636982"
+dependencies = [
+ "anyhow",
+ "bstr",
+ "regex-automata",
+ "regex-syntax",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1915,6 +1941,7 @@ name = "polars-iptools"
 version = "0.1.10"
 dependencies = [
  "criterion",
+ "ip-extract",
  "ipnet",
  "iptrie",
  "maxminddb",

@@ -1,30 +1,30 @@
+use ip_extract::{Extractor, ExtractorBuilder};
 use ipnet::{IpNet, Ipv4Net, Ipv6Net};
 use iptrie::{set::RTrieSet, IpPrefix};
 use polars::prelude::*;
 use polars_core::datatypes::extension::get_extension_type_or_generic;
 use pyo3_polars::derive::polars_expr;
-use regex::Regex;
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
 use std::sync::OnceLock;
 
-static IPV4_RE: OnceLock<Regex> = OnceLock::new();
-static ALL_IP_RE: OnceLock<Regex> = OnceLock::new();
+static IPV4_EXTRACTOR: OnceLock<Extractor> = OnceLock::new();
+static ALL_EXTRACTOR: OnceLock<Extractor> = OnceLock::new();
 
-const IPV4_PATT: &str =
-    r"((?:(?:\d|[01]?\d\d|2[0-4]\d|25[0-5])\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d|\d))";
-const IPV6_PATT: &str = r"((?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,4}:[^\s:](?:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9]).){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])))|(?:::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:](?:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9]).){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])))|(?:fe80:(?::(?:(?:[0-9a-fA-F]){1,4})){0,4}%[0-9a-zA-Z]{1,})|(?::(?:(?::(?:(?:[0-9a-fA-F]){1,4})){1,7}|:))|(?:(?:(?:[0-9a-fA-F]){1,4}):(?:(?::(?:(?:[0-9a-fA-F]){1,4})){1,6}))|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,2}(?::(?:(?:[0-9a-fA-F]){1,4})){1,5})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,3}(?::(?:(?:[0-9a-fA-F]){1,4})){1,4})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,4}(?::(?:(?:[0-9a-fA-F]){1,4})){1,3})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,5}(?::(?:(?:[0-9a-fA-F]){1,4})){1,2})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,6}:(?:(?:[0-9a-fA-F]){1,4}))|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,7}:)|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){7,7}(?:(?:[0-9a-fA-F]){1,4})))";
-
-fn get_ipv4_re() -> &'static Regex {
-    IPV4_RE.get_or_init(|| {
-        Regex::new(IPV4_PATT).expect("BUG: compiled-in IPv4 regex pattern is invalid")
+fn get_ipv4_extractor() -> &'static Extractor {
+    IPV4_EXTRACTOR.get_or_init(|| {
+        ExtractorBuilder::new()
+            .ipv6(false)
+            .build()
+            .expect("BUG: failed to build IPv4 extractor")
     })
 }
 
-fn get_all_ip_re() -> &'static Regex {
-    ALL_IP_RE.get_or_init(|| {
-        let patt = format!("{IPV4_PATT}|{IPV6_PATT}");
-        Regex::new(&patt).expect("BUG: compiled-in IP regex pattern is invalid")
+fn get_all_extractor() -> &'static Extractor {
+    ALL_EXTRACTOR.get_or_init(|| {
+        ExtractorBuilder::new()
+            .build()
+            .expect("BUG: failed to build all-IP extractor")
     })
 }
 
@@ -160,7 +160,11 @@ fn pl_extract_all_ips(inputs: &[Series]) -> PolarsResult<Series> {
     let ipv6_series = &inputs[1];
     let ipv6 = ipv6_series.bool()?.get(0).unwrap_or(false);
 
-    let re = if ipv6 { get_all_ip_re() } else { get_ipv4_re() };
+    let extractor = if ipv6 {
+        get_all_extractor()
+    } else {
+        get_ipv4_extractor()
+    };
 
     let mut builder =
         ListStringChunkedBuilder::new(PlSmallStr::from_static("ips"), ca.len(), ca.len() * 2);
@@ -169,7 +173,9 @@ fn pl_extract_all_ips(inputs: &[Series]) -> PolarsResult<Series> {
         match opt_val {
             Some(val) => {
                 // Stream matches directly into the builder to avoid temporary Vec allocations
-                builder.append_values_iter(re.find_iter(val).map(|m| m.as_str()));
+                builder.append_values_iter(
+                    extractor.find_iter(val.as_bytes()).map(|range| &val[range]),
+                );
             },
             None => builder.append_null(),
         }

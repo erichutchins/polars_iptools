@@ -5,7 +5,7 @@ _default:
 
 # Set up virtual environment
 setup:
-    uv sync --all-extras --dev --optional docs
+    uv sync --all-extras --dev --group docs
 
 # Ensure maturin is available; install via uv if missing
 require-maturin:
@@ -72,3 +72,8 @@ run-release: install-release
 # Test mkdocs locally
 docs-serve:
     uv run --group docs mkdocs serve
+
+# Lint and format python code
+lint:
+    uv run --no-sync ruff format src tests
+    uv run --no-sync ruff check --fix src tests
