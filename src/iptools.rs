@@ -1,31 +1,60 @@
-use ip_extract::{Extractor, ExtractorBuilder};
+use ip_extract::{Extractor, ExtractorBuilder, IpMatch};
 use ipnet::{IpNet, Ipv4Net, Ipv6Net};
 use iptrie::{set::RTrieSet, IpPrefix};
 use polars::prelude::*;
 use polars_core::datatypes::extension::get_extension_type_or_generic;
 use pyo3_polars::derive::polars_expr;
+use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
-static IPV4_EXTRACTOR: OnceLock<Extractor> = OnceLock::new();
-static ALL_EXTRACTOR: OnceLock<Extractor> = OnceLock::new();
+static EXTRACTOR_CACHE: OnceLock<Mutex<HashMap<u8, Extractor>>> = OnceLock::new();
 
-fn get_ipv4_extractor() -> &'static Extractor {
-    IPV4_EXTRACTOR.get_or_init(|| {
-        ExtractorBuilder::new()
-            .ipv6(false)
-            .build()
-            .expect("BUG: failed to build IPv4 extractor")
-    })
-}
+/// Build or retrieve a cached Extractor for the given flag combination.
+/// Bitmask layout:
+///   bit 0 = ipv6
+///   bit 1 = only_public
+///   bit 2 = ignore_private
+///   bit 3 = ignore_loopback
+///   bit 4 = ignore_broadcast
+fn get_extractor(
+    ipv6: bool,
+    only_public: bool,
+    ignore_private: bool,
+    ignore_loopback: bool,
+    ignore_broadcast: bool,
+) -> &'static Extractor {
+    let key = (ipv6 as u8)
+        | ((only_public as u8) << 1)
+        | ((ignore_private as u8) << 2)
+        | ((ignore_loopback as u8) << 3)
+        | ((ignore_broadcast as u8) << 4);
 
-fn get_all_extractor() -> &'static Extractor {
-    ALL_EXTRACTOR.get_or_init(|| {
-        ExtractorBuilder::new()
-            .build()
-            .expect("BUG: failed to build all-IP extractor")
-    })
+    let cache = EXTRACTOR_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut map = cache.lock().unwrap();
+
+    map.entry(key).or_insert_with(|| {
+        let mut builder = ExtractorBuilder::new();
+        builder.ipv6(ipv6);
+        if only_public {
+            builder.only_public();
+        }
+        if ignore_private {
+            builder.ignore_private();
+        }
+        if ignore_loopback {
+            builder.ignore_loopback();
+        }
+        if ignore_broadcast {
+            builder.ignore_broadcast();
+        }
+        builder.build().expect("BUG: failed to build extractor")
+    });
+
+    // SAFETY: HashMap entries are never removed, so the reference is valid for 'static.
+    let ptr: *const Extractor = map.get(&key).unwrap();
+    unsafe { &*ptr }
 }
 
 /// Returns true if this is a valid IPv4 or IPv6 address
@@ -153,18 +182,23 @@ fn extract_ips_output(_: &[Field]) -> PolarsResult<Field> {
     ))
 }
 
-/// Extract all IP addresses from a string column
+/// Extract IP addresses from a string column with optional filtering.
 #[polars_expr(output_type_func=extract_ips_output)]
-fn pl_extract_all_ips(inputs: &[Series]) -> PolarsResult<Series> {
+fn pl_extract_ips(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = inputs[0].str()?;
-    let ipv6_series = &inputs[1];
-    let ipv6 = ipv6_series.bool()?.get(0).unwrap_or(false);
+    let ipv6 = inputs[1].bool()?.get(0).unwrap_or(false);
+    let only_public = inputs[2].bool()?.get(0).unwrap_or(false);
+    let ignore_private = inputs[3].bool()?.get(0).unwrap_or(false);
+    let ignore_loopback = inputs[4].bool()?.get(0).unwrap_or(false);
+    let ignore_broadcast = inputs[5].bool()?.get(0).unwrap_or(false);
 
-    let extractor = if ipv6 {
-        get_all_extractor()
-    } else {
-        get_ipv4_extractor()
-    };
+    let extractor = get_extractor(
+        ipv6,
+        only_public,
+        ignore_private,
+        ignore_loopback,
+        ignore_broadcast,
+    );
 
     let mut builder =
         ListStringChunkedBuilder::new(PlSmallStr::from_static("ips"), ca.len(), ca.len() * 2);
@@ -172,10 +206,50 @@ fn pl_extract_all_ips(inputs: &[Series]) -> PolarsResult<Series> {
     for opt_val in ca {
         match opt_val {
             Some(val) => {
-                // Stream matches directly into the builder to avoid temporary Vec allocations
-                builder.append_values_iter(
-                    extractor.find_iter(val.as_bytes()).map(|range| &val[range]),
-                );
+                let matches: Vec<String> = extractor
+                    .match_iter(val.as_bytes())
+                    .map(|m: IpMatch| m.as_str().into_owned())
+                    .collect();
+                builder.append_values_iter(matches.iter().map(String::as_str));
+            },
+            None => builder.append_null(),
+        }
+    }
+
+    Ok(builder.finish().into_series())
+}
+
+/// Extract only private IP addresses from a string column.
+#[polars_expr(output_type_func=extract_ips_output)]
+fn pl_extract_private_ips(inputs: &[Series]) -> PolarsResult<Series> {
+    let ca = inputs[0].str()?;
+    let ipv6 = inputs[1].bool()?.get(0).unwrap_or(false);
+
+    // Use an extractor without private filter, then post-filter for private only
+    let extractor = get_extractor(ipv6, false, false, true, true);
+
+    let mut builder =
+        ListStringChunkedBuilder::new(PlSmallStr::from_static("ips"), ca.len(), ca.len() * 2);
+
+    for opt_val in ca {
+        match opt_val {
+            Some(val) => {
+                let matches: Vec<String> = extractor
+                    .match_iter(val.as_bytes())
+                    .filter(|m| {
+                        let ip = m.ip();
+                        match ip {
+                            IpAddr::V4(v4) => v4.is_private(),
+                            IpAddr::V6(v6) => {
+                                // ULA: fc00::/7
+                                let seg = v6.segments();
+                                (seg[0] & 0xfe00) == 0xfc00
+                            },
+                        }
+                    })
+                    .map(|m| m.as_str().into_owned())
+                    .collect();
+                builder.append_values_iter(matches.iter().map(String::as_str));
             },
             None => builder.append_null(),
         }
