@@ -34,7 +34,6 @@ maxminddb = { version = "0.27.2", features = ["mmap"] }
 iptrie = "0.11.1"
 ipnet = "2.11.0"
 thiserror = "2.0"
-regex = "1.10"
 ip-extract = "0.1.2"
 
 [dev-dependencies]

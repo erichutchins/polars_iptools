@@ -1951,7 +1951,6 @@ dependencies = [
  "polars-core",
  "pyo3",
  "pyo3-polars",
- "regex",
  "serde",
  "thiserror 2.0.18",
 ]
