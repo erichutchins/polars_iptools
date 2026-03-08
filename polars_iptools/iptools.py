@@ -24,6 +24,9 @@ __all__ = [
     "to_address",
     "to_ipv4",
     "is_in",
+    "extract_ips",
+    "extract_public_ips",
+    "extract_private_ips",
     "extract_all_ips",
 ]
 
@@ -142,53 +145,67 @@ def to_address(expr: IntoExpr) -> pl.Expr:
     return out.ext.to(IPAddress())
 
 
-def extract_all_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
+def extract_ips(
+    expr: IntoExpr,
+    ipv6: bool = False,
+    only_public: bool = False,
+    ignore_private: bool = False,
+    ignore_loopback: bool = False,
+    ignore_broadcast: bool = False,
+) -> pl.Expr:
     """
-    Extract all IP addresses (convience wrapper for str.extract_all)
-
-    Note: this is purely a regex match and not a semantic validation of
-    the string as a true IP address. A common pitfall, for example, is the
-    version string in a browser useragent, as shown below.
+    Extract IP addresses from text, including defanged IPs (e.g. 192[.]168[.]1[.]1).
 
     Parameters
     ----------
     expr
-        The expression or column containing string to extract IP addresses
-    ipv6: bool
-        If true, look for both ipv4 and ipv6 candidate strings
-
-    Examples
-    --------
-    >>> import polars as pl
-    >>> import polars_iptools as ip
-    >>>
-    >>> df = pl.DataFrame(
-    ...     {
-    ...         "log": [
-    ...             'test: 8.8.8.8, "180.179.174.219" 1.2.3.4.5',
-    ...             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3",
-    ...         ]
-    ...     }
-    ... )
-    >>>
-    >>> with pl.Config(fmt_str_lengths=100):
-    ...     print(df.with_columns(ip.extract_all_ips(pl.col("log")).alias("ips")))
-    shape: (2, 2)
-    ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────┐
-    │ log                                                                                                   ┆ ips                                       │
-    │ ---                                                                                                   ┆ ---                                       │
-    │ str                                                                                                   ┆ list[str]                                 │
-    ╞═══════════════════════════════════════════════════════════════════════════════════════════════════════╪═══════════════════════════════════════════╡
-    │ test: 8.8.8.8, "180.179.174.219" 1.2.3.4.5                                                            ┆ ["8.8.8.8", "180.179.174.219", "1.2.3.4"] │
-    │ Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Sa… ┆ ["120.0.0.0"]                             │
-    └───────────────────────────────────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────┘
+        Expression or column containing text to extract IPs from.
+    ipv6
+        If True, also extract IPv6 addresses.
+    only_public
+        If True, skip private, loopback, and broadcast addresses.
+    ignore_private
+        If True, skip RFC 1918 (IPv4) and ULA (IPv6) addresses.
+    ignore_loopback
+        If True, skip loopback addresses (127.0.0.0/8, ::1).
+    ignore_broadcast
+        If True, skip broadcast addresses (255.255.255.255).
 
     Returns
     -------
     Expr
-        Expression of data type `List(String)`.
+        Expression of data type ``List(String)``.
     """
-    # Convert to a polars expression if not already one
+    if isinstance(expr, str):
+        expr = pl.col(expr)
+    elif isinstance(expr, pl.Series):
+        expr = pl.lit(expr)
+
+    return register_plugin_function(
+        args=[
+            expr,
+            pl.lit(ipv6),
+            pl.lit(only_public),
+            pl.lit(ignore_private),
+            pl.lit(ignore_loopback),
+            pl.lit(ignore_broadcast),
+        ],
+        plugin_path=LIB,
+        function_name="pl_extract_ips",
+        is_elementwise=True,
+    )
+
+
+def extract_public_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
+    """Extract only publicly routable IP addresses from text.
+
+    Shortcut for ``extract_ips(expr, only_public=True)``.
+    """
+    return extract_ips(expr, ipv6=ipv6, only_public=True)
+
+
+def extract_private_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
+    """Extract only private (RFC 1918 / ULA) IP addresses from text."""
     if isinstance(expr, str):
         expr = pl.col(expr)
     elif isinstance(expr, pl.Series):
@@ -197,9 +214,19 @@ def extract_all_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
     return register_plugin_function(
         args=[expr, pl.lit(ipv6)],
         plugin_path=LIB,
-        function_name="pl_extract_all_ips",
+        function_name="pl_extract_private_ips",
         is_elementwise=True,
     )
+
+
+def extract_all_ips(expr: IntoExpr, ipv6: bool = False, **kwargs) -> pl.Expr:
+    """Deprecated: use :func:`extract_ips` instead."""
+    warnings.warn(
+        "extract_all_ips() is deprecated, use extract_ips() instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return extract_ips(expr, ipv6=ipv6, **kwargs)
 
 
 def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
@@ -304,7 +331,22 @@ class IpExprExt:
         )
         return numeric_to_ipv4(self._expr)
 
+    def extract_ips(self, ipv6: bool = False, **kwargs) -> pl.Expr:
+        return extract_ips(self._expr, ipv6=ipv6, **kwargs)
+
+    def extract_public_ips(self, ipv6: bool = False) -> pl.Expr:
+        return extract_public_ips(self._expr, ipv6=ipv6)
+
+    def extract_private_ips(self, ipv6: bool = False) -> pl.Expr:
+        return extract_private_ips(self._expr, ipv6=ipv6)
+
     def extract_all_ips(self, ipv6: bool = False) -> pl.Expr:
+        """Deprecated: use :func:`extract_ips` instead."""
+        warnings.warn(
+            "IpExprExt.extract_all_ips() is deprecated, use extract_ips() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return extract_all_ips(self._expr, ipv6)
 
     def is_in(self, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
@@ -359,7 +401,22 @@ class IpSeriesExt:
         )
         return pl.select(numeric_to_ipv4(self._s)).to_series()
 
+    def extract_ips(self, ipv6: bool = False, **kwargs) -> pl.Series:
+        return pl.select(extract_ips(self._s, ipv6=ipv6, **kwargs)).to_series()
+
+    def extract_public_ips(self, ipv6: bool = False) -> pl.Series:
+        return pl.select(extract_public_ips(self._s, ipv6=ipv6)).to_series()
+
+    def extract_private_ips(self, ipv6: bool = False) -> pl.Series:
+        return pl.select(extract_private_ips(self._s, ipv6=ipv6)).to_series()
+
     def extract_all_ips(self, ipv6: bool = False) -> pl.Series:
+        """Deprecated: use :func:`extract_ips` instead."""
+        warnings.warn(
+            "IpSeriesExt.extract_all_ips() is deprecated, use extract_ips() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return pl.select(extract_all_ips(self._s, ipv6)).to_series()
 
     def is_in(self, networks: Union[pl.Expr, Iterable[str]]) -> pl.Series:
