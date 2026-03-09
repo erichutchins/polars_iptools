@@ -16,9 +16,9 @@ concurrency:
 permissions:
   contents: read # Default read-only permissions
 
-# Make sure CI fails on all warnings, including Clippy lints
+# Treat all Rust warnings as errors; skip debug symbols to reduce compile time/memory
 env:
-  RUSTFLAGS: "-Dwarnings"
+  RUSTFLAGS: "-Dwarnings -C debuginfo=0"
 
 jobs:
   # ------------------------------------------------------------------
@@ -45,11 +45,14 @@ jobs:
 
       - name: Rust Cache
         uses: swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref_name == 'main' }}
 
       - name: Install uv and Python
         uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
 
       - name: install deps
         run: uv sync --group dev
@@ -83,9 +86,14 @@ jobs:
 
       - name: cache rust
         uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref_name == 'main' }}
 
       - name: install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
 
       - name: install deps
         run: uv sync --group dev
