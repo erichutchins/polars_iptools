@@ -111,6 +111,7 @@ jobs:
   # ------------------------------------------------------------------
   build-linux:
     name: Build Wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: [test-python, test-os]
     runs-on: ${{ matrix.platform.runner }}
 
@@ -148,6 +149,7 @@ jobs:
 
   build-musllinux:
     name: Build Wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: [test-python, test-os]
     runs-on: ${{ matrix.platform.runner }}
 
@@ -185,6 +187,7 @@ jobs:
 
   build-windows:
     name: Build Wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: [test-python, test-os]
     runs-on: ${{ matrix.platform.runner }}
 
@@ -220,6 +223,7 @@ jobs:
 
   build-macos:
     name: Build Wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: [test-python, test-os]
     runs-on: ${{ matrix.platform.runner }}
 
@@ -257,6 +261,7 @@ jobs:
   # ------------------------------------------------------------------
   sdist:
     name: Build sdist
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
