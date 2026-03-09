@@ -232,8 +232,6 @@ def test_extract_ipv4_and_ipv6_with_ipv6(frame_factory):
     text = [
         "::1",
         '{"json":"8.8.8.8"}',
-        # Note: bracket-wrapped IPv6 like [2001:db8::1a2b:3c4d] are not extracted
-        # because ip-extract treats ']' as an IP boundary character for defang support
         "X-Forwarded-For: [2001:db8::1a2b:3c4d]:41237, 198.51.100.100:26321",
         "X-Forwarded-For: 2001:db8:85a3:8d3:1319:8a2e:370:7348",
         'Forwarded: for="[2001:db8::1234]"',
@@ -247,9 +245,9 @@ def test_extract_ipv4_and_ipv6_with_ipv6(frame_factory):
             "result": [
                 ["::1"],
                 ["8.8.8.8"],
-                ["198.51.100.100"],
+                ["2001:db8::1a2b:3c4d", "198.51.100.100"],
                 ["2001:db8:85a3:8d3:1319:8a2e:370:7348"],
-                [],
+                ["2001:db8::1234"],
             ],
         }
     )

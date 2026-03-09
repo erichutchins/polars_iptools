@@ -1185,9 +1185,9 @@ dependencies = [
 
 [[package]]
 name = "ip-extract"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2410a463e2e0fcfcbf61695f2d749773e56bc5dff64d7c6d4061f68848002cd"
+checksum = "fc9ca8be344d68c4026048593167ef77f6d5718991cf188041b3f4753754e4a5"
 dependencies = [
  "anyhow",
  "bstr",
