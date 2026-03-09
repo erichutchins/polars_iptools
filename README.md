@@ -34,6 +34,37 @@ shape: (6, 2)
 └─────────────────┴────────────┘
 ```
 
+### IP extension types
+
+IPTools provides two Arrow extension types for storing IP addresses efficiently.
+`IPv4` uses 4-byte `UInt32` storage; `IPAddress` uses 16-byte binary and handles
+both IPv4 and IPv6. Both types survive Parquet and IPC round-trips with dtype preserved.
+
+```python
+>>> import polars as pl
+>>> import polars_iptools as ip
+
+>>> df = pl.DataFrame({"ip": ["8.8.8.8", "2606:4700::1111", "192.168.1.1", "invalid"]})
+>>> df.with_columns(ip.to_address("ip"))
+shape: (4, 2)
+┌─────────────────┬─────────────────┐
+│ ip              ┆ ip              │
+│ ---             ┆ ---             │
+│ str             ┆ ip_addr         │
+╞═════════════════╪═════════════════╡
+│ 8.8.8.8         ┆ 8.8.8.8         │
+│ 2606:4700::1111 ┆ 2606:4700::1111 │
+│ 192.168.1.1     ┆ 192.168.1.1     │
+│ invalid         ┆ null            │
+└─────────────────┴─────────────────┘
+
+>>> # Write typed column to Parquet — dtype is preserved on read
+>>> typed = df.with_columns(ip.to_address("ip"))
+>>> typed.write_parquet("/tmp/ips.parquet")
+>>> pl.read_parquet("/tmp/ips.parquet").dtypes
+[String, IPAddress]
+```
+
 ### `is_in` but for network ranges
 
 Pandas and Polars have `is_in` functions to perform membership lookups. IPTools extends this to enable IP address membership in IP _networks_. This function works seamlessly with both IPv4 and IPv6 addresses and converts the specified networks into a [Level-Compressed trie (LC-Trie)](https://github.com/Orange-OpenSource/iptrie) for fast, efficient lookups.
@@ -110,7 +141,7 @@ shape: (4, 2)
 
 shape: (3, 2)
 ┌─────────────────┬─────────────────────────────────┐
-│ ip              ┆ geoip                           │
+│ ip              ┆ spur                            │
 │ ---             ┆ ---                             │
 │ str             ┆ struct[7]                       │
 ╞═════════════════╪═════════════════════════════════╡
