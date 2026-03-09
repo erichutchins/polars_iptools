@@ -32,8 +32,35 @@ __all__ = [
 
 
 def is_valid(expr: IntoExpr) -> pl.Expr:
-    """
-    Returns a boolean if string is a valid IPv4 or IPv6 address
+    """Check whether each string is a valid IPv4 or IPv6 address.
+
+    Parameters
+    ----------
+    expr
+        Expression or column containing IP address strings.
+
+    Returns
+    -------
+    Expr
+        Boolean expression — ``True`` for valid addresses, ``False`` otherwise.
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> import polars_iptools as ip
+    >>> pl.DataFrame({"ip": ["8.8.8.8", "::1", "not_an_ip"]}).with_columns(
+    ...     ip.is_valid("ip")
+    ... )
+    shape: (3, 2)
+    ┌───────────┬──────────┐
+    │ ip        ┆ ip       │
+    │ ---       ┆ ---      │
+    │ str       ┆ bool     │
+    ╞═══════════╪══════════╡
+    │ 8.8.8.8   ┆ true     │
+    │ ::1       ┆ true     │
+    │ not_an_ip ┆ false    │
+    └───────────┴──────────┘
     """
     return register_plugin_function(
         args=[expr],
@@ -44,9 +71,35 @@ def is_valid(expr: IntoExpr) -> pl.Expr:
 
 
 def is_private(expr: IntoExpr) -> pl.Expr:
-    """
-    Returns a boolean if string is an IETF RFC 1918 IPv4 address
-    If input is a IPv6 or an invalid IP, this returns False
+    """Check whether each string is an RFC 1918 private IPv4 address.
+
+    Returns ``False`` for IPv6 addresses and invalid strings.
+
+    Parameters
+    ----------
+    expr
+        Expression or column containing IP address strings.
+
+    Returns
+    -------
+    Expr
+        Boolean expression.
+
+    Examples
+    --------
+    >>> pl.DataFrame({"ip": ["192.168.1.1", "8.8.8.8", "::1"]}).with_columns(
+    ...     ip.is_private("ip")
+    ... )
+    shape: (3, 2)
+    ┌─────────────┬────────────┐
+    │ ip          ┆ ip         │
+    │ ---         ┆ ---        │
+    │ str         ┆ bool       │
+    ╞═════════════╪════════════╡
+    │ 192.168.1.1 ┆ true       │
+    │ 8.8.8.8     ┆ false      │
+    │ ::1         ┆ false      │
+    └─────────────┴────────────┘
     """
     return register_plugin_function(
         args=[expr],
@@ -57,8 +110,34 @@ def is_private(expr: IntoExpr) -> pl.Expr:
 
 
 def ipv4_to_numeric(expr: IntoExpr) -> pl.Expr:
-    """
-    Returns numeric representation (u32) of IPv4 address string
+    """Convert IPv4 address strings to their 32-bit unsigned integer representation.
+
+    Invalid or non-IPv4 strings produce ``null``.
+
+    Parameters
+    ----------
+    expr
+        Expression or column containing IPv4 address strings.
+
+    Returns
+    -------
+    Expr
+        Expression of data type ``UInt32``.
+
+    Examples
+    --------
+    >>> pl.DataFrame({"ip": ["8.8.8.8", "1.1.1.1"]}).with_columns(
+    ...     ip.ipv4_to_numeric("ip")
+    ... )
+    shape: (2, 2)
+    ┌─────────┬───────────┐
+    │ ip      ┆ ip        │
+    │ ---     ┆ ---       │
+    │ str     ┆ u32       │
+    ╞═════════╪═══════════╡
+    │ 8.8.8.8 ┆ 134744072 │
+    │ 1.1.1.1 ┆ 16843009  │
+    └─────────┴───────────┘
     """
     return register_plugin_function(
         args=[expr],
@@ -69,8 +148,34 @@ def ipv4_to_numeric(expr: IntoExpr) -> pl.Expr:
 
 
 def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
-    """
-    Returns IPv4 address string from its numeric representation
+    """Convert 32-bit unsigned integers to IPv4 address strings.
+
+    Non-numeric or out-of-range values produce ``null``.
+
+    Parameters
+    ----------
+    expr
+        Expression or column containing numeric (``UInt32`` or castable) values.
+
+    Returns
+    -------
+    Expr
+        Expression of data type ``String``.
+
+    Examples
+    --------
+    >>> pl.DataFrame({"n": [134744072, 16843009]}).with_columns(
+    ...     ip.numeric_to_ipv4("n")
+    ... )
+    shape: (2, 2)
+    ┌───────────┬─────────┐
+    │ n         ┆ n       │
+    │ ---       ┆ ---     │
+    │ i64       ┆ str     │
+    ╞═══════════╪═════════╡
+    │ 134744072 ┆ 8.8.8.8 │
+    │ 16843009  ┆ 1.1.1.1 │
+    └───────────┴─────────┘
     """
     if isinstance(expr, str):
         expr = pl.col(expr)
@@ -89,8 +194,36 @@ def numeric_to_ipv4(expr: IntoExpr) -> pl.Expr:
 
 
 def to_string(expr: IntoExpr) -> pl.Expr:
-    """
-    Convert IP extension column (IPv4 or IPAddress) to a string column.
+    """Convert an IPv4 or IPAddress extension column back to canonical string form.
+
+    Accepts ``IPv4`` (``UInt32`` storage) or ``IPAddress`` (``Binary`` storage)
+    extension columns. IPv4-mapped IPv6 addresses (``::ffff:x.x.x.x``) are
+    rendered as plain IPv4 strings.
+
+    Parameters
+    ----------
+    expr
+        Expression or column of ``IPv4`` or ``IPAddress`` extension type.
+        Pass ``expr.ext.storage()`` if working with raw storage.
+
+    Returns
+    -------
+    Expr
+        Expression of data type ``String``.
+
+    Examples
+    --------
+    >>> df = pl.DataFrame({"ip": ["8.8.8.8", "2606:4700::1111"]})
+    >>> df.with_columns(ip.to_address("ip").ip.to_string())
+    shape: (2, 2)
+    ┌─────────────────┬─────────────────┐
+    │ ip              ┆ ip              │
+    │ ---             ┆ ---             │
+    │ str             ┆ str             │
+    ╞═════════════════╪═════════════════╡
+    │ 8.8.8.8         ┆ 8.8.8.8         │
+    │ 2606:4700::1111 ┆ 2606:4700::1111 │
+    └─────────────────┴─────────────────┘
     """
     if isinstance(expr, str):
         expr = pl.col(expr)
@@ -106,10 +239,38 @@ def to_string(expr: IntoExpr) -> pl.Expr:
 
 
 def to_ipv4(expr: IntoExpr) -> pl.Expr:
-    """
-    Parse string columns into the IPv4 extension type (UInt32 storage).
+    """Parse IPv4 address strings into the ``IPv4`` extension type (``UInt32`` storage).
 
-    This is the most storage-efficient type for IPv4-only datasets.
+    The ``IPv4`` type is the most storage-efficient representation for IPv4-only
+    datasets — 4 bytes per address vs. ~9–15 bytes as a string. The type is
+    preserved through Parquet and IPC round-trips.
+
+    Invalid strings produce ``null``. IPv6 addresses are not supported; use
+    :func:`to_address` for mixed IPv4/IPv6 data.
+
+    Parameters
+    ----------
+    expr
+        Expression or column containing IPv4 address strings.
+
+    Returns
+    -------
+    Expr
+        Expression of extension type ``IPv4`` (``UInt32`` storage).
+
+    Examples
+    --------
+    >>> df = pl.DataFrame({"ip": ["8.8.8.8", "192.168.1.1"]})
+    >>> df.with_columns(ip.to_ipv4("ip"))
+    shape: (2, 2)
+    ┌─────────────┬─────────────┐
+    │ ip          ┆ ip          │
+    │ ---         ┆ ---         │
+    │ str         ┆ ipv4        │
+    ╞═════════════╪═════════════╡
+    │ 8.8.8.8     ┆ 8.8.8.8     │
+    │ 192.168.1.1 ┆ 192.168.1.1 │
+    └─────────────┴─────────────┘
     """
     if isinstance(expr, str):
         expr = pl.col(expr)
@@ -126,10 +287,43 @@ def to_ipv4(expr: IntoExpr) -> pl.Expr:
 
 
 def to_address(expr: IntoExpr) -> pl.Expr:
-    """
-    Promote Strings, Numbers, or Binary to the Unified IPAddress extension type (Binary storage).
+    """Promote strings, integers, or binary to the ``IPAddress`` extension type.
 
-    This is the modern default for handling mixed IPv4/IPv6 networks.
+    ``IPAddress`` uses 16-byte binary storage (network-order IPv6). IPv4 addresses
+    are stored as IPv4-mapped IPv6 (``::ffff:x.x.x.x``). This is the recommended
+    type for mixed IPv4/IPv6 datasets and for any data that will be written to
+    Parquet or IPC — the extension type metadata is preserved on read.
+
+    Accepts:
+
+    - ``String`` — parsed as IPv4 or IPv6
+    - ``UInt32`` — treated as IPv4 numeric
+    - ``Binary`` (16 bytes) — used as-is
+
+    Parameters
+    ----------
+    expr
+        Expression or column containing IP addresses.
+
+    Returns
+    -------
+    Expr
+        Expression of extension type ``IPAddress`` (``Binary`` storage).
+
+    Examples
+    --------
+    >>> df = pl.DataFrame({"ip": ["8.8.8.8", "2606:4700::1111", "192.168.1.1"]})
+    >>> df.with_columns(ip.to_address("ip"))
+    shape: (3, 2)
+    ┌─────────────────┬─────────────────┐
+    │ ip              ┆ ip              │
+    │ ---             ┆ ---             │
+    │ str             ┆ ip_addr         │
+    ╞═════════════════╪═════════════════╡
+    │ 8.8.8.8         ┆ 8.8.8.8         │
+    │ 2606:4700::1111 ┆ 2606:4700::1111 │
+    │ 192.168.1.1     ┆ 192.168.1.1     │
+    └─────────────────┴─────────────────┘
     """
     if isinstance(expr, str):
         expr = pl.col(expr)
@@ -199,13 +393,74 @@ def extract_ips(
 def extract_public_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
     """Extract only publicly routable IP addresses from text.
 
-    Shortcut for ``extract_ips(expr, only_public=True)``.
+    Shortcut for ``extract_ips(expr, only_public=True)``. Skips RFC 1918
+    private ranges, loopback (``127.0.0.0/8``, ``::1``), and broadcast
+    (``255.255.255.255``). Defanged IPs (e.g. ``192[.]168[.]1[.]1``) are
+    handled automatically.
+
+    Parameters
+    ----------
+    expr
+        Expression or column containing text to extract IPs from.
+    ipv6
+        If ``True``, also extract IPv6 addresses.
+
+    Returns
+    -------
+    Expr
+        Expression of data type ``List(String)``.
+
+    Examples
+    --------
+    >>> pl.DataFrame({"text": ["seen 8.8.8.8 and 192.168.1.1"]}).with_columns(
+    ...     ip.extract_public_ips("text")
+    ... )
+    shape: (1, 2)
+    ┌───────────────────────────────┬──────────────┐
+    │ text                          ┆ text         │
+    │ ---                           ┆ ---          │
+    │ str                           ┆ list[str]    │
+    ╞═══════════════════════════════╪══════════════╡
+    │ seen 8.8.8.8 and 192.168.1.1  ┆ ["8.8.8.8"] │
+    └───────────────────────────────┴──────────────┘
     """
     return extract_ips(expr, ipv6=ipv6, only_public=True)
 
 
 def extract_private_ips(expr: IntoExpr, ipv6: bool = False) -> pl.Expr:
-    """Extract only private (RFC 1918 / ULA) IP addresses from text."""
+    """Extract only private IP addresses from text.
+
+    Returns RFC 1918 addresses (``10/8``, ``172.16/12``, ``192.168/16``) for
+    IPv4, and ULA addresses (``fc00::/7``) for IPv6. Implemented as a
+    post-extraction filter — the extractor first finds all IPs, then keeps
+    only those that pass ``Ipv4Addr::is_private()`` / ULA check.
+
+    Parameters
+    ----------
+    expr
+        Expression or column containing text to extract IPs from.
+    ipv6
+        If ``True``, also extract private IPv6 (ULA) addresses.
+
+    Returns
+    -------
+    Expr
+        Expression of data type ``List(String)``.
+
+    Examples
+    --------
+    >>> pl.DataFrame({"text": ["8.8.8.8 and 10.0.0.1 and 192.168.1.1"]}).with_columns(
+    ...     ip.extract_private_ips("text")
+    ... )
+    shape: (1, 2)
+    ┌───────────────────────────────────────┬──────────────────────────────┐
+    │ text                                  ┆ text                         │
+    │ ---                                   ┆ ---                          │
+    │ str                                   ┆ list[str]                    │
+    ╞═══════════════════════════════════════╪══════════════════════════════╡
+    │ 8.8.8.8 and 10.0.0.1 and 192.168.1.1 ┆ ["10.0.0.1", "192.168.1.1"] │
+    └───────────────────────────────────────┴──────────────────────────────┘
+    """
     if isinstance(expr, str):
         expr = pl.col(expr)
     elif isinstance(expr, pl.Series):
@@ -278,10 +533,23 @@ def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
 
 @pl.api.register_expr_namespace("ip")
 class IpExprExt:
-    """
-    Namespace for IP address operations in Polars expressions.
+    """IP address operations available via the ``.ip`` expression namespace.
 
-    Example: pl.col("src_ip").ip.to_address()
+    All functions in this module are also available as standalone functions.
+    The ``.ip`` namespace is a convenience layer — e.g.:
+
+    .. code-block:: python
+
+        # Standalone
+        ip.to_address(pl.col("src"))
+
+        # Namespace
+        pl.col("src").ip.to_address()
+
+    Parameters
+    ----------
+    expr
+        The Polars expression this namespace is attached to.
     """
 
     def __init__(self, expr: pl.Expr):
@@ -355,10 +623,19 @@ class IpExprExt:
 
 @pl.api.register_series_namespace("ip")
 class IpSeriesExt:
-    """
-    Namespace for IP address operations on Polars Series.
+    """IP address operations available via the ``.ip`` Series namespace.
 
-    Example: df["srcip"].ip.is_private()
+    Mirrors :class:`IpExprExt` for direct Series access — e.g.:
+
+    .. code-block:: python
+
+        series.ip.to_address()
+        series.ip.extract_ips()
+
+    Parameters
+    ----------
+    s
+        The Polars Series this namespace is attached to.
     """
 
     def __init__(self, s: pl.Series):

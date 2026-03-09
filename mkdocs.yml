@@ -4,6 +4,17 @@ site_url: https://erichutchins.github.io/polars_iptools/
 repo_url: https://github.com/erichutchins/polars_iptools
 repo_name: erichutchins/polars_iptools
 
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            show_source: false
+            show_root_heading: true
+            heading_level: 3
+
 theme:
   name: material
   features:
@@ -27,6 +38,8 @@ theme:
 nav:
   - Home: index.md
   - Examples: examples.md
+  - IP Types: ip-types.md
+  - API Reference: api-reference.md
   - Configuration: configuration.md
 
 markdown_extensions:

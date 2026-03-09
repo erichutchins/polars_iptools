@@ -1939,7 +1939,7 @@ dependencies = [
 
 [[package]]
 name = "polars-iptools"
-version = "0.1.10"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "ip-extract",
