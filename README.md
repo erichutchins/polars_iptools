@@ -2,6 +2,15 @@
 
 Polars IPTools is a Rust-based extension to accelerates IP address manipulation and enrichment in Polars dataframes. This library includes various utility functions for working with IPv4 and IPv6 addresses and geoip and anonymization/proxy enrichment using MaxMind databases.
 
+[![Documentation](https://img.shields.io/badge/docs-mkdocs-blue)](https://erichutchins.github.io/polars_iptools/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/polars-iptools)](https://pypi.org/project/polars-iptools/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![ty](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/refs/heads/main/assets/badge/v0.json)](https://github.com/astral-sh/ty)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Claude](https://img.shields.io/badge/Claude-D97757?logo=claude&logoColor=fff)](https://claude.ai)
+[![Gemini](https://img.shields.io/badge/Gemini-8E75FF?logo=googlegemini&logoColor=fff)](https://antigravity.google)
+
 ## Install
 
 ```shell
@@ -161,7 +170,7 @@ Set the `MAXMIND_MMDB_DIR` environment variable to tell the extension where thes
 export MAXMIND_MMDB_DIR=/path/to/your/mmdb/files
 # or Windows users
 set MAXMIND_MMDB_DIR=c:\path\to\your\mmdb\files
-````
+```
 
 If the environment is not set, polars_iptools will check two other common locations (on Mac/Linux):
 
@@ -178,7 +187,7 @@ If you're a Spur customer, export the feed as `spur.mmdb` and specify its locati
 export SPUR_MMDB_DIR=/path/to/spur/mmdb
 # or Windows users
 set SPUR_MMDB_DIR=c:\path\to\spur\mmdb
-````
+```
 
 ## Credit
 
