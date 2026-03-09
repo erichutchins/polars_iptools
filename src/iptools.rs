@@ -384,6 +384,15 @@ fn pl_to_ip(inputs: &[Series]) -> PolarsResult<Series> {
     out.cast(&ip_address_ext_dtype())
 }
 
+// TODO: Implement `dyn_display_value` for human-readable display of IP extension
+// columns once https://github.com/pola-rs/polars/pull/26649 lands.
+//
+// This would allow DataFrames to display "8.8.8.8" instead of raw u32/binary.
+// Reference implementation: https://github.com/deanm0000/uuid_pl_extension
+//
+// For IPv4, the display function would convert u32 -> Ipv4Addr -> String.
+// For IPAddress, it would convert 16-byte binary -> Ipv4Addr/Ipv6Addr -> String.
+
 /// Helper to get the IPv4 extension datatype in Rust
 fn ipv4_ext_dtype() -> DataType {
     let ext_instance =

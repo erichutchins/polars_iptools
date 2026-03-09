@@ -28,6 +28,8 @@ def test_to_ipv4_invalid_returns_null():
     Note: Polars panics when wrapping all-null results into extension types
     (polars-expr/dispatch/extension.rs:22). We verify the underlying plugin
     returns nulls correctly, and that mixed valid/invalid input works.
+
+    Upstream: https://github.com/pola-rs/polars/issues/25322
     """
     df = pl.DataFrame({"ip": ["8.8.8.8", "999.9.9.9", "not_an_ip"]})
 
@@ -95,6 +97,8 @@ def test_to_address_invalid_returns_null():
 
     Note: Polars panics when wrapping all-null results into extension types,
     so we include at least one valid IP to avoid the edge case.
+
+    Upstream: https://github.com/pola-rs/polars/issues/25322
     """
     df = pl.DataFrame({"ip": ["8.8.8.8", "not_an_ip", "999.9.9.9"]})
 
@@ -231,3 +235,71 @@ def test_deprecated_numeric_to_ipv4_correctness():
 
     expected = pl.DataFrame({"result": ["8.8.8.8", "192.168.30.30"]})
     assert_frame_equal(result, expected)
+
+
+# -- Parquet / IPC round-trip ---------------------------------------------
+
+
+def test_parquet_roundtrip_ipv4(tmp_path):
+    """IPv4 extension type survives Parquet write/read."""
+    df = pl.DataFrame({"ip": ["8.8.8.8", "1.1.1.1", "192.168.1.1"]}).select(
+        ip.to_ipv4("ip")
+    )
+    path = tmp_path / "ipv4.parquet"
+    df.write_parquet(path)
+    result = pl.read_parquet(path)
+
+    assert result.dtypes == df.dtypes
+    assert result.shape == df.shape
+    # values survive round-trip
+    assert_frame_equal(
+        result.select(pl.col("ip").ip.to_string()),
+        df.select(pl.col("ip").ip.to_string()),
+    )
+
+
+def test_parquet_roundtrip_ipaddress(tmp_path):
+    """IPAddress extension type survives Parquet write/read."""
+    df = pl.DataFrame({"ip": ["8.8.8.8", "2606:4700::1111", "::1"]}).select(
+        ip.to_address("ip")
+    )
+    path = tmp_path / "ipaddr.parquet"
+    df.write_parquet(path)
+    result = pl.read_parquet(path)
+
+    assert result.dtypes == df.dtypes
+    assert result.shape == df.shape
+    assert_frame_equal(
+        result.select(pl.col("ip").ip.to_string()),
+        df.select(pl.col("ip").ip.to_string()),
+    )
+
+
+def test_ipc_roundtrip_ipv4(tmp_path):
+    """IPv4 extension type survives IPC write/read."""
+    df = pl.DataFrame({"ip": ["8.8.8.8", "1.1.1.1"]}).select(ip.to_ipv4("ip"))
+    path = tmp_path / "ipv4.ipc"
+    df.write_ipc(path)
+    result = pl.read_ipc(path)
+
+    assert result.dtypes == df.dtypes
+    assert_frame_equal(
+        result.select(pl.col("ip").ip.to_string()),
+        df.select(pl.col("ip").ip.to_string()),
+    )
+
+
+def test_ipc_roundtrip_ipaddress(tmp_path):
+    """IPAddress extension type survives IPC write/read."""
+    df = pl.DataFrame({"ip": ["8.8.8.8", "2606:4700::1111"]}).select(
+        ip.to_address("ip")
+    )
+    path = tmp_path / "ipaddr.ipc"
+    df.write_ipc(path)
+    result = pl.read_ipc(path)
+
+    assert result.dtypes == df.dtypes
+    assert_frame_equal(
+        result.select(pl.col("ip").ip.to_string()),
+        df.select(pl.col("ip").ip.to_string()),
+    )
