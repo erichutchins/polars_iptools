@@ -8,7 +8,7 @@ description = "Polars extension for IP address parsing and enrichment including 
 readme = "README.md"
 license = { file = "LICENSE" }
 keywords = ["polars", "dfir", "geoip", "ip-address", "geolocation"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -18,7 +18,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Rust",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -26,7 +25,9 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = ["polars>=1.3.0"]
+dependencies = [
+    "polars>=1.3.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/erichutchins/polars_iptools"
@@ -47,7 +48,7 @@ installer = "uv"
 dependencies = ["maturin", "mypy", "polars", "pytest", "pytest", "ruff"]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["39", "310", "311", "312", "313"]
+python = ["310", "311", "312", "313"]
 
 [tool.hatch.envs.test.scripts]
 tests = "python -m pytest tests"
@@ -67,4 +68,5 @@ dev = [
 ]
 docs = [
     "mkdocs-material>=9.7.0",
+    "mkdocstrings[python]>=0.29",
 ]

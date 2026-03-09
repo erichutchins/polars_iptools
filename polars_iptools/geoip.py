@@ -35,14 +35,12 @@ def asn(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     pl.Expr
         Expression of :class:`Utf8` strings
 
-    Example
-    -------
+    Examples
+    --------
     >>> import polars as pl
     >>> import polars_iptools as ip
-
-    >>> df = pl.DataFrame({"ip":["8.8.8.8", "192.168.1.1", "2606:4700::1111", "999.abc.def.123"]})
+    >>> df = pl.DataFrame({"ip": ["8.8.8.8", "192.168.1.1", "2606:4700::1111", "999.abc.def.123"]})
     >>> df.with_columns([ip.geoip.asn(pl.col("ip")).alias("asn")])
-
     shape: (4, 2)
     ┌─────────────────┬───────────────────────┐
     │ ip              ┆ asn                   │
@@ -54,9 +52,10 @@ def asn(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     │ 2606:4700::1111 ┆ AS13335 CLOUDFLARENET │
     │ 999.abc.def.123 ┆                       │
     └─────────────────┴───────────────────────┘
+
     Notes
     -----
-    - Invalid IP address strings or IPs not found in the database will result in an empty string output.
+    Invalid IP address strings or IPs not found in the database will result in an empty string output.
     """
     return register_plugin_function(
         args=[expr],
@@ -97,14 +96,12 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
         - timezone : String
         - postalcode: String
 
-    Example
-    -------
+    Examples
+    --------
     >>> import polars as pl
     >>> import polars_iptools as ip
-
-    >>> df = pl.DataFrame({"ip":["8.8.8.8", "192.168.1.1", "2606:4700::1111", "999.abc.def.123"]})
+    >>> df = pl.DataFrame({"ip": ["8.8.8.8", "192.168.1.1", "2606:4700::1111", "999.abc.def.123"]})
     >>> df = df.with_columns([ip.geoip.full(pl.col("ip")).alias("geoip")])
-
     shape: (4, 2)
     ┌─────────────────┬─────────────────────────────────┐
     │ ip              ┆ geoip                           │
@@ -116,7 +113,6 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     │ 2606:4700::1111 ┆ {13335,"CLOUDFLARENET","","","… │
     │ 999.abc.def.123 ┆ {null,null,null,null,null,null… │
     └─────────────────┴─────────────────────────────────┘
-
     >>> df.schema
     Schema([('ip', String),
             ('geoip',
@@ -124,9 +120,10 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
              'continent': String, 'subdivision_iso': String, 'subdivision': String,
              'country_iso': String, 'country': String, 'latitude': Float64,
              'longitude': Float64, 'timezone': String, 'postalcode': String}))])
+
     Notes
     -----
-    - IP addresses that are invalid or not found in the database will result in `null` values in the respective fields.
+    IP addresses that are invalid or not found in the database will result in ``null`` values in the respective fields.
     """
     return register_plugin_function(
         args=[expr],

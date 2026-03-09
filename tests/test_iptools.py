@@ -181,7 +181,7 @@ def test_extract_ipv4(frame_factory):
         "X-Forwarded-For: 203.0.113.195:41237, 198.51.100.100:38523",
     ]
 
-    result = factory({"text": text}, ip.extract_all_ips("text"))
+    result = factory({"text": text}, ip.extract_ips("text"))
 
     expected_df = pl.DataFrame(
         {
@@ -208,7 +208,7 @@ def test_extract_ipv4_and_ipv6(frame_factory):
         "X-Forwarded-For: 203.0.113.195:41237, 198.51.100.100:38523",
     ]
 
-    result = factory({"text": text}, ip.extract_all_ips("text", ipv6=True))
+    result = factory({"text": text}, ip.extract_ips("text", ipv6=True))
 
     expected_df = pl.DataFrame(
         {
@@ -237,7 +237,7 @@ def test_extract_ipv4_and_ipv6_with_ipv6(frame_factory):
         'Forwarded: for="[2001:db8::1234]"',
     ]
 
-    result = factory({"text": text}, ip.extract_all_ips("text", ipv6=True))
+    result = factory({"text": text}, ip.extract_ips("text", ipv6=True))
 
     expected_df = pl.DataFrame(
         {
@@ -251,5 +251,117 @@ def test_extract_ipv4_and_ipv6_with_ipv6(frame_factory):
             ],
         }
     )
+
+    assert_frame_equal(result, expected_df)
+
+
+def test_extract_defanged_ips(frame_factory):
+    """defanged IPs are extracted and returned in canonical form"""
+    _, factory = frame_factory
+    text = [
+        "threat: 192[.]168[.]1[.]1 seen",
+        "ioc: 10[.]0[.]0[.]1 and 8.8.8.8",
+        "clean text no ips here",
+    ]
+
+    result = factory({"text": text}, ip.extract_ips("text"))
+
+    expected_df = pl.DataFrame(
+        {
+            "text": text,
+            "result": [
+                ["192.168.1.1"],
+                ["10.0.0.1", "8.8.8.8"],
+                [],
+            ],
+        }
+    )
+
+    assert_frame_equal(result, expected_df)
+
+
+def test_extract_only_public(frame_factory):
+    """only_public filters out private, loopback, and broadcast"""
+    _, factory = frame_factory
+    text = [
+        "public 8.8.8.8 and private 192.168.1.1",
+        "loopback 127.0.0.1 and public 1.1.1.1",
+        "broadcast 255.255.255.255 and public 9.9.9.9",
+    ]
+
+    result = factory({"text": text}, ip.extract_ips("text", only_public=True))
+
+    expected_df = pl.DataFrame(
+        {
+            "text": text,
+            "result": [
+                ["8.8.8.8"],
+                ["1.1.1.1"],
+                ["9.9.9.9"],
+            ],
+        }
+    )
+
+    assert_frame_equal(result, expected_df)
+
+
+def test_extract_public_ips(frame_factory):
+    """convenience function for public-only extraction"""
+    _, factory = frame_factory
+    text = ["8.8.8.8 and 10.0.0.1"]
+
+    result = factory({"text": text}, ip.extract_public_ips("text"))
+
+    expected_df = pl.DataFrame({"text": text, "result": [["8.8.8.8"]]})
+
+    assert_frame_equal(result, expected_df)
+
+
+def test_extract_private_ips(frame_factory):
+    """extract only private IPs"""
+    _, factory = frame_factory
+    text = [
+        "public 8.8.8.8 and private 192.168.1.1",
+        "private 10.0.0.1 and private 172.16.0.1",
+        "only public 1.1.1.1",
+    ]
+
+    result = factory({"text": text}, ip.extract_private_ips("text"))
+
+    expected_df = pl.DataFrame(
+        {
+            "text": text,
+            "result": [
+                ["192.168.1.1"],
+                ["10.0.0.1", "172.16.0.1"],
+                [],
+            ],
+        }
+    )
+
+    assert_frame_equal(result, expected_df)
+
+
+def test_extract_all_ips_deprecated(frame_factory):
+    """extract_all_ips still works but emits deprecation warning"""
+    _, factory = frame_factory
+    text = ["8.8.8.8 and 1.1.1.1"]
+
+    with pytest.warns(DeprecationWarning, match="extract_ips"):
+        result = factory({"text": text}, ip.extract_all_ips("text"))
+
+    expected_df = pl.DataFrame({"text": text, "result": [["8.8.8.8", "1.1.1.1"]]})
+
+    assert_frame_equal(result, expected_df)
+
+
+def test_extract_ignore_private(frame_factory):
+    """ignore_private filters RFC 1918 but keeps loopback and public"""
+    _, factory = frame_factory
+    text = ["8.8.8.8 and 192.168.1.1 and 127.0.0.1"]
+
+    result = factory({"text": text}, ip.extract_ips("text", ignore_private=True))
+
+    expected_df = pl.DataFrame({"text": text, "result": [["8.8.8.8", "127.0.0.1"]]})
 
     assert_frame_equal(result, expected_df)

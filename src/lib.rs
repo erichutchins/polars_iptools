@@ -1,9 +1,10 @@
+#[macro_use]
+mod utils;
 mod geoip;
 mod iptools;
 mod maxmind;
 mod spur;
 mod spurdb;
-mod utils;
 use pyo3::types::PyModule;
 use pyo3::types::PyModuleMethods;
 use pyo3::{pymodule, Bound, PyResult};

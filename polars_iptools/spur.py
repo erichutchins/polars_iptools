@@ -48,17 +48,15 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
         - tag : String
         - services : List[String]
 
-    Example
-    -------
+    Examples
+    --------
     >>> import polars as pl
     >>> import polars_iptools as ip
-
-    >>> df = pl.DataFrame({"ip":["8.8.8.8", "192.168.1.1", "999.abc.def.123"]})
+    >>> df = pl.DataFrame({"ip": ["8.8.8.8", "192.168.1.1", "999.abc.def.123"]})
     >>> df = df.with_columns([ip.spur.full(pl.col("ip")).alias("spurcontext")])
-
     shape: (3, 2)
     ┌─────────────────┬─────────────────────────────────┐
-    │ ip              ┆ geoip                           │
+    │ ip              ┆ spurcontext                     │
     │ ---             ┆ ---                             │
     │ str             ┆ struct[7]                       │
     ╞═════════════════╪═════════════════════════════════╡
@@ -66,16 +64,16 @@ def full(expr: IntoExpr, reload_mmdb: bool = False) -> pl.Expr:
     │ 192.168.1.1     ┆ {0.0,"","","","","",null}       │
     │ 999.abc.def.123 ┆ {null,null,null,null,null,null… │
     └─────────────────┴─────────────────────────────────┘
-
     >>> df.schema
     Schema([('ip', String),
             ('spurcontext',
              Struct({'client_count': Float32, 'infrastructure': String,
              'location_city': String, 'location_country': String,
              'location_state': String, 'tag': String, 'services': List(String)}))])
+
     Notes
     -----
-    - IP addresses that are invalid or not found in the database will result in `null` values in the respective fields.
+    IP addresses that are invalid or not found in the database will result in ``null`` values in the respective fields.
     """
     return register_plugin_function(
         args=[expr],
