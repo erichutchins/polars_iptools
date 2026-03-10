@@ -1,0 +1,4027 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Polars extension for IP address parsing and enrichment including geolocation">
+      
+      
+      
+        <link rel="canonical" href="https://erichutchins.github.io/polars_iptools/api-reference/">
+      
+      
+        <link rel="prev" href="../ip-types/">
+      
+      
+        <link rel="next" href="../configuration/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>API Reference - Polars IPTools</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Polars IPTools" class="md-header__button md-logo" aria-label="Polars IPTools" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Polars IPTools
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/erichutchins/polars_iptools" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    erichutchins/polars_iptools
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../examples/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ip-types/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  IP Types
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Polars IPTools" class="md-nav__button md-logo" aria-label="Polars IPTools" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Polars IPTools
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/erichutchins/polars_iptools" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    erichutchins/polars_iptools
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ip-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IP Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#polars_iptools.iptools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iptools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="iptools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IpExprExt
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IpExprExt">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.extract_all_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_all_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.ipv4_to_numeric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ipv4_to_numeric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.numeric_to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numeric_to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_address
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_canonical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_canonical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_native" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_native
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_string
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IpSeriesExt
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IpSeriesExt">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt.extract_all_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_all_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt.ipv4_to_numeric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ipv4_to_numeric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt.numeric_to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numeric_to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt.to_canonical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_canonical
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.is_valid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_valid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.is_private" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_private
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.to_address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_address
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.to_string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_string
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.extract_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.extract_public_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_public_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.extract_private_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_private_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.is_in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.ipv4_to_numeric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ipv4_to_numeric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.numeric_to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numeric_to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.extract_all_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_all_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ip-extension-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IP Extension Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IP Extension Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.types.IPv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IPv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.types.IPAddress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IPAddress
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geoip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GeoIP
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GeoIP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geoip
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geoip">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip.GeoIpExprExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GeoIpExprExt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip.GeoIpSeriesExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GeoIpSeriesExt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip.asn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        asn
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip.full" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        full
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spur
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Spur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.spur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spur
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="spur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.spur.SpurExprExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SpurExprExt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.spur.SpurSeriesExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SpurSeriesExt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.spur.full" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        full
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#polars_iptools.iptools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iptools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="iptools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IpExprExt
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IpExprExt">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.extract_all_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_all_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.ipv4_to_numeric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ipv4_to_numeric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.numeric_to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numeric_to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_address
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_canonical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_canonical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_native" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_native
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpExprExt.to_string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_string
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IpSeriesExt
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IpSeriesExt">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt.extract_all_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_all_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt.ipv4_to_numeric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ipv4_to_numeric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt.numeric_to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numeric_to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.IpSeriesExt.to_canonical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_canonical
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.is_valid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_valid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.is_private" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_private
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.to_address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_address
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.to_string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_string
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.extract_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.extract_public_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_public_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.extract_private_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_private_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.is_in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_in
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.ipv4_to_numeric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ipv4_to_numeric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.numeric_to_ipv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numeric_to_ipv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.iptools.extract_all_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_all_ips
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ip-extension-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IP Extension Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IP Extension Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.types.IPv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IPv4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.types.IPAddress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IPAddress
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geoip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GeoIP
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GeoIP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geoip
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geoip">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip.GeoIpExprExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GeoIpExprExt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip.GeoIpSeriesExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GeoIpSeriesExt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip.asn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        asn
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.geoip.full" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        full
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spur
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Spur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.spur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spur
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="spur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.spur.SpurExprExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SpurExprExt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.spur.SpurSeriesExt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SpurSeriesExt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polars_iptools.spur.full" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        full
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="api-reference">API Reference</h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="polars_iptools.iptools" class="doc doc-heading">
+            <code>polars_iptools.iptools</code>
+
+
+</h3>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="polars_iptools.iptools.IpExprExt" class="doc doc-heading">
+            <code>IpExprExt</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>IP address operations available via the <code>.ip</code> expression namespace.</p>
+<p>All functions in this module are also available as standalone functions.
+The <code>.ip</code> namespace is a convenience layer — e.g.:</p>
+<p>.. code-block:: python</p>
+<div class="highlight"><pre><span></span><code># Standalone
+ip.to_address(pl.col(&quot;src&quot;))
+
+# Namespace
+pl.col(&quot;src&quot;).ip.to_address()
+</code></pre></div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars.Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The Polars expression this namespace is attached to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpExprExt.extract_all_ips" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">extract_all_ips</span><span class="p">(</span><span class="n">ipv6</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Deprecated: use :func:<code>extract_ips</code> instead.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpExprExt.ipv4_to_numeric" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ipv4_to_numeric</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Deprecated: use <code>ipv4_to_numeric(expr)</code> standalone function instead.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpExprExt.numeric_to_ipv4" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">numeric_to_ipv4</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Deprecated: use <code>numeric_to_ipv4(expr)</code> standalone function instead.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpExprExt.to_address" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_address</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Promote to Unified IPAddress extension type (future-proof).</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpExprExt.to_canonical" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_canonical</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Alias for to_string().</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpExprExt.to_ipv4" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_ipv4</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert/Parse to IPv4 extension type (optimized 32-bit).</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpExprExt.to_native" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_native</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Alias for to_address().</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpExprExt.to_string" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_string</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert IP extension back to a canonical string representation.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="polars_iptools.iptools.IpSeriesExt" class="doc doc-heading">
+            <code>IpSeriesExt</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>IP address operations available via the <code>.ip</code> Series namespace.</p>
+<p>Mirrors :class:<code>IpExprExt</code> for direct Series access — e.g.:</p>
+<p>.. code-block:: python</p>
+<div class="highlight"><pre><span></span><code>series.ip.to_address()
+series.ip.extract_ips()
+</code></pre></div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>s</code>
+            </td>
+            <td>
+                  <code><span title="polars.Series">Series</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The Polars Series this namespace is attached to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpSeriesExt.extract_all_ips" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">extract_all_ips</span><span class="p">(</span><span class="n">ipv6</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Deprecated: use :func:<code>extract_ips</code> instead.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpSeriesExt.ipv4_to_numeric" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ipv4_to_numeric</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Deprecated: use <code>ipv4_to_numeric(expr)</code> standalone function instead.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpSeriesExt.numeric_to_ipv4" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">numeric_to_ipv4</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Deprecated: use <code>numeric_to_ipv4(expr)</code> standalone function instead.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="polars_iptools.iptools.IpSeriesExt.to_canonical" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_canonical</span><span class="p">()</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Alias for to_string().</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.is_valid" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">is_valid</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Check whether each string is a valid IPv4 or IPv6 address.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing IP address strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Boolean expression — <code>True</code> for valid addresses, <code>False</code> otherwise.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars_iptools</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ip</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;::1&quot;</span><span class="p">,</span> <span class="s2">&quot;not_an_ip&quot;</span><span class="p">]})</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span>    <span class="n">ip</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">shape: (3, 2)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">┌───────────┬──────────┐</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ ip        ┆ ip       │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">│ ---       ┆ ---      │</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ str       ┆ bool     │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">╞═══════════╪══════════╡</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">│ 8.8.8.8   ┆ true     │</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="go">│ ::1       ┆ true     │</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="go">│ not_an_ip ┆ false    │</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="go">└───────────┴──────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.is_private" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">is_private</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Check whether each string is an RFC 1918 private IPv4 address.</p>
+<p>Returns <code>False</code> for IPv6 addresses and invalid strings.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing IP address strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Boolean expression.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;192.168.1.1&quot;</span><span class="p">,</span> <span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;::1&quot;</span><span class="p">]})</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">ip</span><span class="o">.</span><span class="n">is_private</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">shape: (3, 2)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">┌─────────────┬────────────┐</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">│ ip          ┆ ip         │</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ ---         ┆ ---        │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ str         ┆ bool       │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">╞═════════════╪════════════╡</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ 192.168.1.1 ┆ true       │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">│ 8.8.8.8     ┆ false      │</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">│ ::1         ┆ false      │</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="go">└─────────────┴────────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.to_ipv4" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_ipv4</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Parse IPv4 address strings into the <code>IPv4</code> extension type (<code>UInt32</code> storage).</p>
+<p>The <code>IPv4</code> type is the most storage-efficient representation for IPv4-only
+datasets — 4 bytes per address vs. ~9–15 bytes as a string. The type is
+preserved through Parquet and IPC round-trips.</p>
+<p>Invalid strings produce <code>null</code>. IPv6 addresses are not supported; use
+:func:<code>to_address</code> for mixed IPv4/IPv6 data.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing IPv4 address strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of extension type <code>IPv4</code> (<code>UInt32</code> storage).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.1.1&quot;</span><span class="p">]})</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">ip</span><span class="o">.</span><span class="n">to_ipv4</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">))</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">shape: (2, 2)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">┌─────────────┬─────────────┐</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">│ ip          ┆ ip          │</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">│ ---         ┆ ---         │</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ str         ┆ ipv4        │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">╞═════════════╪═════════════╡</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">│ 8.8.8.8     ┆ 8.8.8.8     │</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ 192.168.1.1 ┆ 192.168.1.1 │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">└─────────────┴─────────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.to_address" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_address</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Promote strings, integers, or binary to the <code>IPAddress</code> extension type.</p>
+<p><code>IPAddress</code> uses 16-byte binary storage (network-order IPv6). IPv4 addresses
+are stored as IPv4-mapped IPv6 (<code>::ffff:x.x.x.x</code>). This is the recommended
+type for mixed IPv4/IPv6 datasets and for any data that will be written to
+Parquet or IPC — the extension type metadata is preserved on read.</p>
+<p>Accepts:</p>
+<ul>
+<li><code>String</code> — parsed as IPv4 or IPv6</li>
+<li><code>UInt32</code> — treated as IPv4 numeric</li>
+<li><code>Binary</code> (16 bytes) — used as-is</li>
+</ul>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing IP addresses.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of extension type <code>IPAddress</code> (<code>Binary</code> storage).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;2606:4700::1111&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.1.1&quot;</span><span class="p">]})</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">ip</span><span class="o">.</span><span class="n">to_address</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">))</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">shape: (3, 2)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">┌─────────────────┬─────────────────┐</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">│ ip              ┆ ip              │</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">│ ---             ┆ ---             │</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ str             ┆ ip_addr         │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">╞═════════════════╪═════════════════╡</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">│ 8.8.8.8         ┆ 8.8.8.8         │</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ 2606:4700::1111 ┆ 2606:4700::1111 │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">│ 192.168.1.1     ┆ 192.168.1.1     │</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">└─────────────────┴─────────────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.to_string" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_string</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert an IPv4 or IPAddress extension column back to canonical string form.</p>
+<p>Accepts <code>IPv4</code> (<code>UInt32</code> storage) or <code>IPAddress</code> (<code>Binary</code> storage)
+extension columns. IPv4-mapped IPv6 addresses (<code>::ffff:x.x.x.x</code>) are
+rendered as plain IPv4 strings.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column of <code>IPv4</code> or <code>IPAddress</code> extension type.
+Pass <code>expr.ext.storage()</code> if working with raw storage.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of data type <code>String</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;2606:4700::1111&quot;</span><span class="p">]})</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">ip</span><span class="o">.</span><span class="n">to_address</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">ip</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">shape: (2, 2)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">┌─────────────────┬─────────────────┐</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">│ ip              ┆ ip              │</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">│ ---             ┆ ---             │</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ str             ┆ str             │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">╞═════════════════╪═════════════════╡</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">│ 8.8.8.8         ┆ 8.8.8.8         │</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ 2606:4700::1111 ┆ 2606:4700::1111 │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">└─────────────────┴─────────────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.extract_ips" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">extract_ips</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ipv6</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">only_public</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_private</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_loopback</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_broadcast</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Extract IP addresses from text, including defanged IPs (e.g. 192[.]168[.]1[.]1).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing text to extract IPs from.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ipv6</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, also extract IPv6 addresses.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>only_public</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, skip private, loopback, and broadcast addresses.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ignore_private</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, skip RFC 1918 (IPv4) and ULA (IPv6) addresses.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ignore_loopback</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, skip loopback addresses (127.0.0.0/8, ::1).</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ignore_broadcast</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, skip broadcast addresses (255.255.255.255).</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of data type <code>List(String)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.extract_public_ips" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">extract_public_ips</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ipv6</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Extract only publicly routable IP addresses from text.</p>
+<p>Shortcut for <code>extract_ips(expr, only_public=True)</code>. Skips RFC 1918
+private ranges, loopback (<code>127.0.0.0/8</code>, <code>::1</code>), and broadcast
+(<code>255.255.255.255</code>). Defanged IPs (e.g. <code>192[.]168[.]1[.]1</code>) are
+handled automatically.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing text to extract IPs from.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ipv6</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>True</code>, also extract IPv6 addresses.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of data type <code>List(String)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;seen 8.8.8.8 and 192.168.1.1&quot;</span><span class="p">]})</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">ip</span><span class="o">.</span><span class="n">extract_public_ips</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">shape: (1, 2)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">┌───────────────────────────────┬──────────────┐</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">│ text                          ┆ text         │</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ ---                           ┆ ---          │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ str                           ┆ list[str]    │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">╞═══════════════════════════════╪══════════════╡</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ seen 8.8.8.8 and 192.168.1.1  ┆ [&quot;8.8.8.8&quot;] │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">└───────────────────────────────┴──────────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.extract_private_ips" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">extract_private_ips</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ipv6</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Extract only private IP addresses from text.</p>
+<p>Returns RFC 1918 addresses (<code>10/8</code>, <code>172.16/12</code>, <code>192.168/16</code>) for
+IPv4, and ULA addresses (<code>fc00::/7</code>) for IPv6. Implemented as a
+post-extraction filter — the extractor first finds all IPs, then keeps
+only those that pass <code>Ipv4Addr::is_private()</code> / ULA check.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing text to extract IPs from.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ipv6</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>True</code>, also extract private IPv6 (ULA) addresses.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of data type <code>List(String)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8 and 10.0.0.1 and 192.168.1.1&quot;</span><span class="p">]})</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">ip</span><span class="o">.</span><span class="n">extract_private_ips</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">shape: (1, 2)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">┌───────────────────────────────────────┬──────────────────────────────┐</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">│ text                                  ┆ text                         │</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ ---                                   ┆ ---                          │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ str                                   ┆ list[str]                    │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">╞═══════════════════════════════════════╪══════════════════════════════╡</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ 8.8.8.8 and 10.0.0.1 and 192.168.1.1 ┆ [&quot;10.0.0.1&quot;, &quot;192.168.1.1&quot;] │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">└───────────────────────────────────────┴──────────────────────────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.is_in" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">is_in</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">networks</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Returns a boolean if IPv4 or IPv6 address is in any of the network ranges in "networks"</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The expression or column containing the IP addresses to check</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>networks</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="polars.Expr">Expr</span>, <span title="collections.abc.Iterable">Iterable</span>[<span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>IPv4 and IPv6 CIDR ranges defining the network. This can be a Polars expression, a list of strings, or a set of strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars_iptools</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ip</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;1.1.1.1&quot;</span><span class="p">,</span> <span class="s2">&quot;2606:4700::1111&quot;</span><span class="p">]})</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">networks</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;8.8.8.0/24&quot;</span><span class="p">,</span> <span class="s2">&quot;2606:4700::/32&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">ip</span><span class="o">.</span><span class="n">is_in</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">),</span> <span class="n">networks</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;is_in&quot;</span><span class="p">))</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">shape: (3, 2)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">┌─────────────────┬───────┐</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ ip              ┆ is_in │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">│ ---             ┆ ---   │</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ str             ┆ bool  │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">╞═════════════════╪═══════╡</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">│ 8.8.8.8         ┆ true  │</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="go">│ 1.1.1.1         ┆ false │</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="go">│ 2606:4700::1111 ┆ true  │</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="go">└─────────────────┴───────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.ipv4_to_numeric" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ipv4_to_numeric</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert IPv4 address strings to their 32-bit unsigned integer representation.</p>
+<p>Invalid or non-IPv4 strings produce <code>null</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing IPv4 address strings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of data type <code>UInt32</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;1.1.1.1&quot;</span><span class="p">]})</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">ip</span><span class="o">.</span><span class="n">ipv4_to_numeric</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">shape: (2, 2)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">┌─────────┬───────────┐</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">│ ip      ┆ ip        │</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ ---     ┆ ---       │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ str     ┆ u32       │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">╞═════════╪═══════════╡</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ 8.8.8.8 ┆ 134744072 │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">│ 1.1.1.1 ┆ 16843009  │</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">└─────────┴───────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.numeric_to_ipv4" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">numeric_to_ipv4</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert 32-bit unsigned integers to IPv4 address strings.</p>
+<p>Non-numeric or out-of-range values produce <code>null</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression or column containing numeric (<code>UInt32</code> or castable) values.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of data type <code>String</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">134744072</span><span class="p">,</span> <span class="mi">16843009</span><span class="p">]})</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">ip</span><span class="o">.</span><span class="n">numeric_to_ipv4</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">shape: (2, 2)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">┌───────────┬─────────┐</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">│ n         ┆ n       │</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ ---       ┆ ---     │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ i64       ┆ str     │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">╞═══════════╪═════════╡</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">│ 134744072 ┆ 8.8.8.8 │</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">│ 16843009  ┆ 1.1.1.1 │</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">└───────────┴─────────┘</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.iptools.extract_all_ips" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">extract_all_ips</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ipv6</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Deprecated: use :func:<code>extract_ips</code> instead.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="ip-extension-types">IP Extension Types</h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="polars_iptools.types" class="doc doc-heading">
+            <code>polars_iptools.types</code>
+
+
+</h3>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="polars_iptools.types.IPv4" class="doc doc-heading">
+            <code>IPv4</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="polars.BaseExtension">BaseExtension</span></code></p>
+
+
+
+        <p>IPv4 Extension Type backing onto UInt32.</p>
+<p>This type represents an IPv4 address stored efficiently as a 32-bit unsigned integer
+but displayed and handled as an IP address.</p>
+
+
+<details class="known-issues" open>
+  <summary>Known issues</summary>
+  <ul>
+<li>All-null columns panic when wrapped into extension types
+  (https://github.com/pola-rs/polars/issues/25322, polars-expr/dispatch/extension.rs).
+  Include at least one valid value to avoid this.</li>
+<li>Custom display formatting (showing <code>8.8.8.8</code> instead of raw <code>u32</code>) is pending
+  upstream support (https://github.com/pola-rs/polars/pull/26649).</li>
+</ul>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="polars_iptools.types.IPAddress" class="doc doc-heading">
+            <code>IPAddress</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="polars.BaseExtension">BaseExtension</span></code></p>
+
+
+
+        <p>Unified IP Address Extension Type backing onto Binary(16).</p>
+<p>This type represents any IP address (IPv4 or IPv6).
+IPv4 addresses are stored as IPv4-mapped IPv6 addresses (::ffff:x.x.x.x).</p>
+
+
+<details class="known-issues" open>
+  <summary>Known issues</summary>
+  <ul>
+<li>All-null columns panic when wrapped into extension types
+  (https://github.com/pola-rs/polars/issues/25322, polars-expr/dispatch/extension.rs).
+  Include at least one valid value to avoid this.</li>
+<li>Custom display formatting (showing <code>8.8.8.8</code> instead of raw bytes) is pending
+  upstream support (https://github.com/pola-rs/polars/pull/26649).</li>
+<li><code>to_list()</code> crashes on <code>list[extension]</code> columns
+  (https://github.com/pola-rs/polars/issues/19418).</li>
+</ul>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="geoip">GeoIP</h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="polars_iptools.geoip" class="doc doc-heading">
+            <code>polars_iptools.geoip</code>
+
+
+</h3>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="polars_iptools.geoip.GeoIpExprExt" class="doc doc-heading">
+            <code>GeoIpExprExt</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>This class contains tools for geolocation enrichment of IP addresses.</p>
+<p>Polars Namespace: geoip</p>
+<p>Example: df.with_columns([pl.col("srcip").geoip.asn()])</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="polars_iptools.geoip.GeoIpSeriesExt" class="doc doc-heading">
+            <code>GeoIpSeriesExt</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>This class contains tools for parsing IP addresses.</p>
+<p>Polars Namespace: geoip</p>
+<p>Example: df["srcip"].geoip.asn()</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.geoip.asn" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">asn</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">reload_mmdb</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve ASN and Organizational names for Internet-routed IPv4 and IPv6 addresses
+Returns a string in the format "AS{asnum} {asorg}"</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The expression or column containing IP addresses.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>reload_mmdb</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Force reload/reinitialize of MaxMind db readers. Default is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="polars.Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expression of :class:<code>Utf8</code> strings</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars_iptools</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ip</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.1.1&quot;</span><span class="p">,</span> <span class="s2">&quot;2606:4700::1111&quot;</span><span class="p">,</span> <span class="s2">&quot;999.abc.def.123&quot;</span><span class="p">]})</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">([</span><span class="n">ip</span><span class="o">.</span><span class="n">geoip</span><span class="o">.</span><span class="n">asn</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;asn&quot;</span><span class="p">)])</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">shape: (4, 2)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">┌─────────────────┬───────────────────────┐</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ ip              ┆ asn                   │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ ---             ┆ ---                   │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">│ str             ┆ str                   │</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">╞═════════════════╪═══════════════════════╡</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">│ 8.8.8.8         ┆ AS15169 GOOGLE        │</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">│ 192.168.1.1     ┆                       │</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="go">│ 2606:4700::1111 ┆ AS13335 CLOUDFLARENET │</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="go">│ 999.abc.def.123 ┆                       │</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="go">└─────────────────┴───────────────────────┘</span>
+</code></pre></div>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>Invalid IP address strings or IPs not found in the database will result in an empty string output.</p>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.geoip.full" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">full</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">reload_mmdb</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve full ASN and City geolocation metadata of IPv4 and IPv6 addresses</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The expression or column containing IP addresses.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>reload_mmdb</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Force reload/reinitialize of MaxMind db readers. Default is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="polars.Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An expression that returns a struct containing the following fields:
+- asnnum : UInt32
+- asnorg : String
+- city : String
+- continent : String
+- country : String
+- country_iso : String
+- latitude : Float64
+- longitude : Float64
+- subdivision : String
+- subdivision_iso : String
+- timezone : String
+- postalcode: String</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars_iptools</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ip</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.1.1&quot;</span><span class="p">,</span> <span class="s2">&quot;2606:4700::1111&quot;</span><span class="p">,</span> <span class="s2">&quot;999.abc.def.123&quot;</span><span class="p">]})</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">([</span><span class="n">ip</span><span class="o">.</span><span class="n">geoip</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;geoip&quot;</span><span class="p">)])</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">shape: (4, 2)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">┌─────────────────┬─────────────────────────────────┐</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ ip              ┆ geoip                           │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ ---             ┆ ---                             │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">│ str             ┆ struct[12]                      │</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">╞═════════════════╪═════════════════════════════════╡</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">│ 8.8.8.8         ┆ {15169,&quot;GOOGLE&quot;,&quot;&quot;,&quot;NA&quot;,&quot;&quot;,&quot;&quot;,… │</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">│ 192.168.1.1     ┆ {0,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,0.0,0.… │</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="go">│ 2606:4700::1111 ┆ {13335,&quot;CLOUDFLARENET&quot;,&quot;&quot;,&quot;&quot;,&quot;… │</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="go">│ 999.abc.def.123 ┆ {null,null,null,null,null,null… │</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="go">└─────────────────┴─────────────────────────────────┘</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">schema</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="go">Schema([(&#39;ip&#39;, String),</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="go">        (&#39;geoip&#39;,</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="go">         Struct({&#39;asnnum&#39;: UInt32, &#39;asnorg&#39;: String, &#39;city&#39;: String,</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="go">         &#39;continent&#39;: String, &#39;subdivision_iso&#39;: String, &#39;subdivision&#39;: String,</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="go">         &#39;country_iso&#39;: String, &#39;country&#39;: String, &#39;latitude&#39;: Float64,</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="go">         &#39;longitude&#39;: Float64, &#39;timezone&#39;: String, &#39;postalcode&#39;: String}))])</span>
+</code></pre></div>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>IP addresses that are invalid or not found in the database will result in <code>null</code> values in the respective fields.</p>
+</details>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="spur">Spur</h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="polars_iptools.spur" class="doc doc-heading">
+            <code>polars_iptools.spur</code>
+
+
+</h3>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="polars_iptools.spur.SpurExprExt" class="doc doc-heading">
+            <code>SpurExprExt</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>This class contains tools for Spur IP Context enrichment.</p>
+<p>Polars Namespace: spur</p>
+<p>Example: df.with_columns([pl.col("srcip").spur.full()])</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="polars_iptools.spur.SpurSeriesExt" class="doc doc-heading">
+            <code>SpurSeriesExt</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>This class contains tools for Spur IP Context enrichment.</p>
+<p>Polars Namespace: spur</p>
+<p>Example: df["srcip"].spur.full()</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="polars_iptools.spur.full" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">full</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">reload_mmdb</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve full Spur IP Context metadata of IPv4 and IPv6 addresses</p>
+<p>If you are customer of Spur, you can download a subset of their
+Anonymization and Anonymization+Residential feeds in Maxmind MMDB
+format. See https://docs.spur.us/feeds?id=feed-export-utility for
+more details.</p>
+<p>This function requires the directory containing "spur.mmdb" to be
+defined by environment variable SPUR_MMDB_DIR.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expr</code>
+            </td>
+            <td>
+                  <code><span title="polars_iptools.typing.IntoExpr">IntoExpr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The expression or column containing IP addresses.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>reload_mmdb</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Force reload/reinitialize of Spur's mmdb reader. Default is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="polars.Expr">Expr</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An expression that returns a struct containing the following fields:
+- client_count : Float32
+- infrastructure : String
+- location_city : String
+- location_country : String
+- location_state : String
+- tag : String
+- services : List[String]</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">polars_iptools</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ip</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.1.1&quot;</span><span class="p">,</span> <span class="s2">&quot;999.abc.def.123&quot;</span><span class="p">]})</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">([</span><span class="n">ip</span><span class="o">.</span><span class="n">spur</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;spurcontext&quot;</span><span class="p">)])</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">shape: (3, 2)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">┌─────────────────┬─────────────────────────────────┐</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">│ ip              ┆ spurcontext                     │</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">│ ---             ┆ ---                             │</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="go">│ str             ┆ struct[7]                       │</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="go">╞═════════════════╪═════════════════════════════════╡</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="go">│ 8.8.8.8         ┆ {0.0,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,null}       │</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="go">│ 192.168.1.1     ┆ {0.0,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,null}       │</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="go">│ 999.abc.def.123 ┆ {null,null,null,null,null,null… │</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="go">└─────────────────┴─────────────────────────────────┘</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">schema</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="go">Schema([(&#39;ip&#39;, String),</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="go">        (&#39;spurcontext&#39;,</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="go">         Struct({&#39;client_count&#39;: Float32, &#39;infrastructure&#39;: String,</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="go">         &#39;location_city&#39;: String, &#39;location_country&#39;: String,</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="go">         &#39;location_state&#39;: String, &#39;tag&#39;: String, &#39;services&#39;: List(String)}))])</span>
+</code></pre></div>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>IP addresses that are invalid or not found in the database will result in <code>null</code> values in the respective fields.</p>
+</details>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
