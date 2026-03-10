@@ -62,7 +62,6 @@ dev = [
     "hatch>=1.14.0",
     "maturin>=1.0,<2.0",
     "mypy>=1.11.2",
-    "pre-commit>=4.1.0",
     "pytest>=8.3.3",
     "ruff>=0.9.6",
 ]

@@ -33,11 +33,13 @@ install: setup require-maturin
 install-release: setup require-maturin
     unset CONDA_PREFIX && source .venv/bin/activate && maturin develop --uv --release
 
-# Run pre-commit checks
-pre-commit: setup
-    uv run pre-commit install
-    uv run pre-commit run --all-files
-    uv run mypy polars_iptools tests
+# Install prek git hooks
+hooks:
+    prek install
+
+# Run all pre-commit hooks
+lint:
+    prek run --all-files
 
 # Clean up build artifacts
 clean:
@@ -72,8 +74,3 @@ run-release: install-release
 # Test mkdocs locally
 docs-serve:
     uv run --group docs mkdocs serve
-
-# Lint and format python code
-lint:
-    uv run --no-sync ruff format src tests
-    uv run --no-sync ruff check --fix src tests
