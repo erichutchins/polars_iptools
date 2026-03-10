@@ -235,8 +235,8 @@ jobs:
       - name: Smoke test wheel
         if: matrix.platform.target == 'x64'
         run: |
-          pip install --force-reinstall --verbose dist/*.whl
-          python -c 'import polars_iptools'
+          pip install --force-reinstall dist/*.whl
+          cd /tmp && python -c 'import polars_iptools; print(polars_iptools.__version__)'
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -275,8 +275,8 @@ jobs:
 
       - name: Smoke test wheel
         run: |
-          pip install --force-reinstall --verbose dist/*.whl
-          python -c 'import polars_iptools'
+          pip install --force-reinstall dist/*.whl
+          cd /tmp && python -c 'import polars_iptools; print(polars_iptools.__version__)'
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
