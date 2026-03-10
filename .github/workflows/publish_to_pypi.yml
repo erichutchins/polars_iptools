@@ -1,4 +1,4 @@
-name: CI
+name: Build & Release
 
 on:
   push:
@@ -6,7 +6,23 @@ on:
       - main
     tags:
       - "*" # Trigger on tag push for release
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "pyproject.toml"
+      - "polars_iptools/**"
+      - "tests/**"
+      - ".github/workflows/publish_to_pypi.yml"
   pull_request:
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "pyproject.toml"
+      - "polars_iptools/**"
+      - "tests/**"
+      - ".github/workflows/publish_to_pypi.yml"
   workflow_dispatch: # Trigger for manual release run
 
 concurrency:
@@ -16,9 +32,10 @@ concurrency:
 permissions:
   contents: read # Default read-only permissions
 
-# Treat all Rust warnings as errors; skip debug symbols to reduce compile time/memory
 env:
   RUSTFLAGS: "-Dwarnings -C debuginfo=0"
+  CARGO_INCREMENTAL: 0
+  PYTHONUTF8: 1
 
 jobs:
   # ------------------------------------------------------------------
@@ -38,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Rust stable toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -79,7 +96,7 @@ jobs:
         os: [ubuntu, macos, windows]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: install rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -110,7 +127,7 @@ jobs:
   # Build Wheels
   # ------------------------------------------------------------------
   build-linux:
-    name: Build Wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    name: Build Wheels (linux, ${{ matrix.platform.target }})
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: [test-python, test-os]
     runs-on: ${{ matrix.platform.runner }}
@@ -127,9 +144,9 @@ jobs:
             target: armv7
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
@@ -141,6 +158,12 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
 
+      - name: Smoke test wheel
+        if: matrix.platform.target == 'x86_64'
+        run: |
+          pip install --force-reinstall --verbose dist/*.whl
+          python -c 'import polars_iptools'
+
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -148,7 +171,7 @@ jobs:
           path: dist
 
   build-musllinux:
-    name: Build Wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    name: Build Wheels (musllinux, ${{ matrix.platform.target }})
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: [test-python, test-os]
     runs-on: ${{ matrix.platform.runner }}
@@ -165,9 +188,9 @@ jobs:
             target: armv7
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
@@ -186,7 +209,7 @@ jobs:
           path: dist
 
   build-windows:
-    name: Build Wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    name: Build Wheels (windows, ${{ matrix.platform.target }})
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: [test-python, test-os]
     runs-on: ${{ matrix.platform.runner }}
@@ -201,9 +224,9 @@ jobs:
             target: x86
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
@@ -215,6 +238,12 @@ jobs:
           args: --release --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
+      - name: Smoke test wheel
+        if: matrix.platform.target == 'x64'
+        run: |
+          pip install --force-reinstall --verbose dist/*.whl
+          python -c 'import polars_iptools'
+
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -222,7 +251,7 @@ jobs:
           path: dist
 
   build-macos:
-    name: Build Wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    name: Build Wheels (macos, ${{ matrix.platform.target }})
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: [test-python, test-os]
     runs-on: ${{ matrix.platform.runner }}
@@ -231,15 +260,15 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - runner: macos-14
+          - runner: macos-15-intel
             target: x86_64
           - runner: macos-15
             target: aarch64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
@@ -249,6 +278,11 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+      - name: Smoke test wheel
+        run: |
+          pip install --force-reinstall --verbose dist/*.whl
+          python -c 'import polars_iptools'
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -264,7 +298,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
@@ -296,15 +330,15 @@ jobs:
       attestations: write
     steps:
       - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: "wheels-*/*"
+          subject-path: "dist/*"
       - name: Publish to PyPI
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: PyO3/maturin-action@v1
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          command: upload
-          args: --non-interactive --skip-existing wheels-*/*
+          skip-existing: true
