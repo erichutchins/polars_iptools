@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
@@ -48,7 +49,7 @@ installer = "uv"
 dependencies = ["maturin", "mypy", "polars", "pytest", "pytest", "ruff"]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["310", "311", "312", "313"]
+python = ["310", "311", "312", "313", "314"]
 
 [tool.hatch.envs.test.scripts]
 tests = "python -m pytest tests"
@@ -57,13 +58,19 @@ tests = "python -m pytest tests"
 line-length = 88
 fix = true
 
+[tool.ruff.format]
+# Docs prose reads better with hand-wrapped examples; ruff 0.16 formats
+# Python blocks inside Markdown by default, so opt those out.
+exclude = ["*.md"]
+
 [dependency-groups]
 dev = [
     "hatch>=1.14.0",
     "maturin>=1.0,<2.0",
-    "mypy>=1.11.2",
-    "pytest>=8.3.3",
-    "ruff>=0.9.6",
+    "mypy>=2.3.1",
+    "prek>=0.4.14",
+    "pytest>=9.1.1",
+    "ruff>=0.16.4",
 ]
 docs = [
     "mkdocs-material>=9.7.0",

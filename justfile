@@ -34,12 +34,12 @@ install-release: setup require-maturin
     unset CONDA_PREFIX && source .venv/bin/activate && maturin develop --uv --release
 
 # Install prek git hooks
-hooks:
-    prek install
+hooks: setup
+    uv run prek install
 
-# Run all pre-commit hooks
-lint:
-    prek run --all-files
+# Run all prek hooks
+lint: setup
+    uv run prek run --all-files
 
 # Clean up build artifacts
 clean:

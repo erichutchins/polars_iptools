@@ -1,15 +1,11 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import sys
+    # TypeAlias is in typing from 3.10, which is our minimum.
+    from typing import TypeAlias
 
     import polars as pl
-
-    if sys.version_info >= (3, 10):
-        from typing import TypeAlias
-    else:
-        from typing_extensions import TypeAlias
     from polars.datatypes import DataType, DataTypeClass
 
-    IntoExpr: TypeAlias = Union[pl.Expr, str, pl.Series]
-    PolarsDataType: TypeAlias = Union[DataType, DataTypeClass]
+    IntoExpr: TypeAlias = pl.Expr | str | pl.Series
+    PolarsDataType: TypeAlias = DataType | DataTypeClass
