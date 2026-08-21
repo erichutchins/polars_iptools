@@ -17,32 +17,52 @@ step() {
     "$@" || warn "'$*' failed."
 }
 
-# Named volumes mount as root; the toolchain runs as vscode.
-step "Taking ownership of cache volumes" \
-    sudo chown -R "$(id -u):$(id -g)" \
-    /usr/local/cargo/registry \
-    "${PWD}/target" \
-    "${HOME}/.claude"
+step "Volume permissions" "$(dirname "$0")/fix-volume-perms.sh"
 
 # rust-toolchain.toml drives the version; this materialises it up front so the
 # first cargo invocation isn't a surprise download.
 step "Rust toolchain" rustup show active-toolchain
 step "Rust components" rustup component add clippy rustfmt
 
+# The base image ships its own default toolchain and a pinned nightly, neither
+# of which this project uses -- rust-toolchain.toml selects stable. Three
+# toolchains is ~2GB of a disk budget that a polars build needs for artifacts.
+prune_toolchains() {
+    local active
+    active=$(rustup show active-toolchain | head -1 | cut -d' ' -f1) || return 1
+    [ -n "$active" ] || return 1
+    # Toolchains baked into the image are owned by root, so rustup cannot remove
+    # them as vscode. Hand the tree over first; this also lets later
+    # `rustup update`/`component add` work without sudo.
+    sudo chown -R "$(id -u):$(id -g)" "${RUSTUP_HOME:-$HOME/.rustup}/toolchains" || true
+    rustup default "$active" || return 1
+    rustup toolchain list | awk '{print $1}' | grep -vx "$active" |
+        while read -r tc; do
+            echo "    removing unused toolchain: $tc"
+            rustup toolchain uninstall "$tc" || true
+        done
+}
+step "Pruning unused Rust toolchains" prune_toolchains
+
 # remoteEnv covers interactive shells, but this script runs before that applies.
 export PATH="${HOME}/.local/bin:${PATH}"
+
+# just is the entry point that bootstraps everything else, so it has to exist
+# before the project venv does. maturin, prek, hatch and the rest are project
+# dev dependencies -- they come from `uv sync` below and are run via `uv run`,
+# so installing them as global tools too would just be a second copy free to
+# drift from the pinned one.
 step "Installing just" uv tool install rust-just
-step "Installing prek" uv tool install prek
-step "Installing maturin" uv tool install maturin
 
 # --no-install-project deliberately skips compiling the crate. Building it here
 # would mean a full release build (lto = "fat", codegen-units = 1) during
 # provisioning, and a compile error would take the whole container down with it.
 # Use `just install` for a debug build once the container is up.
+# The interpreter itself is fetched by uv, pinned by .python-version.
 step "Python environment" \
     uv sync --all-extras --dev --group docs --no-install-project
 
-step "Git hooks" prek install
+step "Git hooks" uv run prek install
 
 cat <<'BANNER'
 

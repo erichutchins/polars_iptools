@@ -3,17 +3,19 @@
   "image": "mcr.microsoft.com/devcontainers/rust:1-bookworm",
 
   // polars is a heavy compile; undersized Codespaces will thrash.
+  // storage matters as much as cpu/memory here: a full debug + release build
+  // of the polars tree runs ~10GB, and a dependency bump leaves the previous
+  // versions' artifacts behind until `cargo clean`. The Codespaces default of
+  // 32gb is not enough headroom for that.
   "hostRequirements": {
     "cpus": 4,
-    "memory": "8gb"
+    "memory": "8gb",
+    "storage": "64gb"
   },
 
   "features": {
-    // 3.12 matches the default used by the CI workflows. uv manages the
-    // other interpreters in the test matrix on demand.
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.12"
-    },
+    // No python feature: uv provisions the interpreter, pinned by
+    // .python-version, and manages the rest of the test matrix on demand.
     "ghcr.io/devcontainers-extra/features/uv:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
 
@@ -37,6 +39,8 @@
   },
 
   "onCreateCommand": ".devcontainer/post-create.sh",
+  // Volumes outlive the container; re-assert ownership on every start.
+  "postStartCommand": ".devcontainer/fix-volume-perms.sh",
 
   "customizations": {
     "vscode": {
@@ -49,7 +53,9 @@
       ],
       "settings": {
         "python.defaultInterpreterPath": "${containerWorkspaceFolder}/.venv/bin/python",
-        "rust-analyzer.cargo.features": "all"
+        // Give rust-analyzer its own target dir. Sharing target/ with the
+        // terminal means each blocks the other on the cargo build lock.
+        "rust-analyzer.cargo.targetDir": true
       }
     }
   },
