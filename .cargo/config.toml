@@ -1,2 +1,7 @@
-[build]
+# These flags let the Python extension module leave symbols undefined until
+# load time. They are macOS-only: under [build] they applied to every target,
+# including host build scripts, which breaks Linux builds. rust-lld (the
+# default linker for x86_64-unknown-linux-gnu since Rust 1.90) rejects them
+# outright with "cannot open dynamic_lookup".
+[target.'cfg(target_os = "macos")']
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]

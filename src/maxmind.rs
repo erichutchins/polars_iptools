@@ -1,5 +1,5 @@
 #![allow(clippy::unused_unit)]
-use maxminddb::{geoip2, Mmap, Reader};
+use maxminddb::{Mmap, Reader, geoip2};
 use polars::prelude::*;
 use std::env;
 use std::io;

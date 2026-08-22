@@ -96,7 +96,6 @@ class SpurExprExt:
     Example: df.with_columns([pl.col("srcip").spur.full()])
     """
 
-    # noqa: D102
     def __init__(self, expr: pl.Expr):
         self._expr: pl.Expr = expr
 
@@ -114,7 +113,6 @@ class SpurSeriesExt:
     Example: df["srcip"].spur.full()
     """
 
-    # noqa: D102
     def __init__(self, s: pl.Series):
         self._s: pl.Series = s
 

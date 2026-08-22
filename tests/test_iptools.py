@@ -137,7 +137,7 @@ def test_numeric_to_ipv4_strings(frame_factory):
     [
         ["8.8.8.0/24", "2606:4700::/32"],
         pl.Series(["8.8.8.0/24", "2606:4700::/32"]),
-        set(["8.8.8.0/24", "2606:4700::/32"]),
+        {"8.8.8.0/24", "2606:4700::/32"},
     ],
 )
 def test_is_in(frame_factory, networks):
@@ -157,9 +157,9 @@ def test_is_in(frame_factory, networks):
 
 
 def test_is_in_invalid_network(frame_factory):
-    name, factory_fn = frame_factory
+    name, _ = frame_factory
     ips = ["8.8.8.8", "1.1.1.1", "2606:4700::1111"]
-    networks = set(["8.8.8.0/55"])
+    networks = {"8.8.8.0/55"}
 
     # For this test, we need to handle the expected exception manually
     with pytest.raises(pl.exceptions.ComputeError, match="Invalid CIDR range"):

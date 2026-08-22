@@ -146,7 +146,6 @@ class GeoIpExprExt:
     Example: df.with_columns([pl.col("srcip").geoip.asn()])
     """
 
-    # noqa: D102
     def __init__(self, expr: pl.Expr):
         self._expr: pl.Expr = expr
 
@@ -167,7 +166,6 @@ class GeoIpSeriesExt:
     Example: df["srcip"].geoip.asn()
     """
 
-    # noqa: D102
     def __init__(self, s: pl.Series):
         self._s: pl.Series = s
 

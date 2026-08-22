@@ -4,7 +4,7 @@ use polars::prelude::*;
 use pyo3_polars::derive::polars_expr;
 use std::fmt::Write;
 
-use crate::iptools::{series_to_ipaddrs, IpEntry};
+use crate::iptools::{IpEntry, series_to_ipaddrs};
 use crate::maxmind::{MaxMindDB, MaxmindBuilders};
 use crate::utils::MMDBKwargs;
 

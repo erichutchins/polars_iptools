@@ -1,0 +1,7 @@
+# Keeps the container, local machines, and CI on the same compiler.
+# The hard floor lives in Cargo.toml's `rust-version`; cargo enforces it and
+# reports a clear MSRV error rather than an opaque failure from a transitive
+# dependency (polars 0.55 pulls sysinfo, which requires 1.95).
+[toolchain]
+channel = "stable"
+components = ["clippy", "rustfmt"]

@@ -1,23 +1,23 @@
 use ip_extract::{Extractor, ExtractorBuilder, IpMatch};
 use ipnet::{IpNet, Ipv4Net, Ipv6Net};
-use iptrie::{set::RTrieSet, IpPrefix};
+use iptrie::{IpPrefix, set::RTrieSet};
 use polars::prelude::*;
 use polars_core::datatypes::extension::get_extension_type_or_generic;
 use pyo3_polars::derive::polars_expr;
-use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
-use std::sync::{Mutex, OnceLock};
+use std::sync::OnceLock;
 
-static EXTRACTOR_CACHE: OnceLock<Mutex<HashMap<u8, Extractor>>> = OnceLock::new();
-
-/// Build or retrieve a cached Extractor for the given flag combination.
+/// One slot per flag combination; the bitmask below indexes straight into it.
 /// Bitmask layout:
 ///   bit 0 = ipv6
 ///   bit 1 = only_public
 ///   bit 2 = ignore_private
 ///   bit 3 = ignore_loopback
 ///   bit 4 = ignore_broadcast
+static EXTRACTOR_CACHE: [OnceLock<Extractor>; 32] = [const { OnceLock::new() }; 32];
+
+/// Build or retrieve a cached Extractor for the given flag combination.
 fn get_extractor(
     ipv6: bool,
     only_public: bool,
@@ -25,16 +25,13 @@ fn get_extractor(
     ignore_loopback: bool,
     ignore_broadcast: bool,
 ) -> &'static Extractor {
-    let key = (ipv6 as u8)
-        | ((only_public as u8) << 1)
-        | ((ignore_private as u8) << 2)
-        | ((ignore_loopback as u8) << 3)
-        | ((ignore_broadcast as u8) << 4);
+    let key = (ipv6 as usize)
+        | ((only_public as usize) << 1)
+        | ((ignore_private as usize) << 2)
+        | ((ignore_loopback as usize) << 3)
+        | ((ignore_broadcast as usize) << 4);
 
-    let cache = EXTRACTOR_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
-    let mut map = cache.lock().unwrap();
-
-    map.entry(key).or_insert_with(|| {
+    EXTRACTOR_CACHE[key].get_or_init(|| {
         let mut builder = ExtractorBuilder::new();
         builder.ipv6(ipv6);
         if only_public {
@@ -50,11 +47,7 @@ fn get_extractor(
             builder.ignore_broadcast();
         }
         builder.build().expect("BUG: failed to build extractor")
-    });
-
-    // SAFETY: HashMap entries are never removed, so the reference is valid for 'static.
-    let ptr: *const Extractor = map.get(&key).unwrap();
-    unsafe { &*ptr }
+    })
 }
 
 /// Returns true if this is a valid IPv4 or IPv6 address
@@ -85,7 +78,7 @@ fn pl_ipv4_to_numeric(inputs: &[Series]) -> PolarsResult<Series> {
     let mut builder: PrimitiveChunkedBuilder<UInt32Type> =
         PrimitiveChunkedBuilder::new(PlSmallStr::from_static("ipv4_numeric"), ca.len());
 
-    for opt_value in ca {
+    for opt_value in ca.iter() {
         if let Some(value) = opt_value {
             match value.parse::<std::net::Ipv4Addr>() {
                 Ok(ipv4) => {
@@ -109,7 +102,7 @@ fn pl_numeric_to_ipv4(inputs: &[Series]) -> PolarsResult<Series> {
     let ca = binding.u32()?;
     let mut builder = StringChunkedBuilder::new(PlSmallStr::from_static("ipv4_string"), ca.len());
 
-    for opt_value in ca {
+    for opt_value in ca.iter() {
         if let Some(num) = opt_value {
             let ip = Ipv4Addr::from(num);
             builder.append_value(ip.to_string());
@@ -132,7 +125,7 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
     let mut ipv6_rtrie: RTrieSet<Ipv6Net> = RTrieSet::with_capacity(ca2.len() / 2);
 
     // Iterate over ca2, parse as IP range, and add it to the appropriate trie
-    for cidr in ca2.into_iter().flatten() {
+    for cidr in ca2.iter().flatten() {
         match IpNet::from_str(cidr) {
             Ok(IpNet::V4(ipv4)) => {
                 ipv4_rtrie.insert(ipv4);
@@ -153,7 +146,7 @@ fn pl_is_in(inputs: &[Series]) -> PolarsResult<Series> {
     // Prepare builder to collect results
     let mut builder = BooleanChunkedBuilder::new(PlSmallStr::from_static("is_in"), ca1.len());
 
-    for opt_value in ca1 {
+    for opt_value in ca1.iter() {
         if let Some(value) = opt_value {
             match IpAddr::from_str(value) {
                 Ok(ip) => {
@@ -203,7 +196,7 @@ fn pl_extract_ips(inputs: &[Series]) -> PolarsResult<Series> {
     let mut builder =
         ListStringChunkedBuilder::new(PlSmallStr::from_static("ips"), ca.len(), ca.len() * 2);
 
-    for opt_val in ca {
+    for opt_val in ca.iter() {
         match opt_val {
             Some(val) => {
                 let matches: Vec<String> = extractor
@@ -231,7 +224,7 @@ fn pl_extract_private_ips(inputs: &[Series]) -> PolarsResult<Series> {
     let mut builder =
         ListStringChunkedBuilder::new(PlSmallStr::from_static("ips"), ca.len(), ca.len() * 2);
 
-    for opt_val in ca {
+    for opt_val in ca.iter() {
         match opt_val {
             Some(val) => {
                 let matches: Vec<String> = extractor
@@ -240,11 +233,8 @@ fn pl_extract_private_ips(inputs: &[Series]) -> PolarsResult<Series> {
                         let ip = m.ip();
                         match ip {
                             IpAddr::V4(v4) => v4.is_private(),
-                            IpAddr::V6(v6) => {
-                                // ULA: fc00::/7
-                                let seg = v6.segments();
-                                (seg[0] & 0xfe00) == 0xfc00
-                            },
+                            // ULA: fc00::/7
+                            IpAddr::V6(v6) => v6.is_unique_local(),
                         }
                     })
                     .map(|m| m.as_str().into_owned())
@@ -268,7 +258,7 @@ fn pl_ip_to_str(inputs: &[Series]) -> PolarsResult<Series> {
             let ca = s.u32()?;
             let mut builder =
                 StringChunkedBuilder::new(PlSmallStr::from_static("ip_string"), ca.len());
-            for opt_value in ca {
+            for opt_value in ca.iter() {
                 if let Some(num) = opt_value {
                     builder.append_value(Ipv4Addr::from(num).to_string());
                 } else {
@@ -281,39 +271,18 @@ fn pl_ip_to_str(inputs: &[Series]) -> PolarsResult<Series> {
             let ca = s.binary()?;
             let mut builder =
                 StringChunkedBuilder::new(PlSmallStr::from_static("ip_string"), ca.len());
-            for opt_value in ca {
-                if let Some(bytes) = opt_value {
-                    if bytes.len() == 16 {
-                        let mut octets = [0u8; 16];
-                        octets.copy_from_slice(bytes);
-                        let ip = std::net::Ipv6Addr::from(octets);
-
-                        // Check for IPv4-mapped address: ::ffff:a.b.c.d
-                        let segments = ip.segments();
-                        if segments[0] == 0
-                            && segments[1] == 0
-                            && segments[2] == 0
-                            && segments[3] == 0
-                            && segments[4] == 0
-                            && segments[5] == 0xffff
-                        {
-                            let ipv4 = std::net::Ipv4Addr::new(
-                                (segments[6] >> 8) as u8,
-                                (segments[6] & 0xff) as u8,
-                                (segments[7] >> 8) as u8,
-                                (segments[7] & 0xff) as u8,
-                            );
-                            builder.append_value(ipv4.to_string());
-                        } else {
-                            builder.append_value(ip.to_string());
-                        }
-                    } else if bytes.len() == 4 {
-                        let mut octets = [0u8; 4];
-                        octets.copy_from_slice(bytes);
-                        builder.append_value(std::net::Ipv4Addr::from(octets).to_string());
-                    } else {
-                        builder.append_null();
-                    }
+            for opt_value in ca.iter() {
+                // to_canonical unwraps IPv4-mapped addresses (::ffff:a.b.c.d) to
+                // dotted quad and leaves every other v6 address alone.
+                if let Some(bytes) = opt_value
+                    && let Ok(octets) = <[u8; 16]>::try_from(bytes)
+                {
+                    let ip = std::net::Ipv6Addr::from(octets);
+                    builder.append_value(ip.to_canonical().to_string());
+                } else if let Some(bytes) = opt_value
+                    && let Ok(octets) = <[u8; 4]>::try_from(bytes)
+                {
+                    builder.append_value(std::net::Ipv4Addr::from(octets).to_string());
                 } else {
                     builder.append_null();
                 }
@@ -333,7 +302,7 @@ fn pl_to_ip(inputs: &[Series]) -> PolarsResult<Series> {
             let ca = s.u32()?;
             let mut builder =
                 BinaryChunkedBuilder::new(PlSmallStr::from_static("ip_address"), ca.len());
-            for opt_val in ca {
+            for opt_val in ca.iter() {
                 if let Some(num) = opt_val {
                     let ipv6 = std::net::Ipv4Addr::from(num).to_ipv6_mapped();
                     builder.append_value(ipv6.octets().as_slice());
@@ -348,7 +317,7 @@ fn pl_to_ip(inputs: &[Series]) -> PolarsResult<Series> {
             let ca = s_u32.u32()?;
             let mut builder =
                 BinaryChunkedBuilder::new(PlSmallStr::from_static("ip_address"), ca.len());
-            for opt_val in ca {
+            for opt_val in ca.iter() {
                 if let Some(num) = opt_val {
                     let ipv6 = std::net::Ipv4Addr::from(num).to_ipv6_mapped();
                     builder.append_value(ipv6.octets().as_slice());
@@ -362,7 +331,7 @@ fn pl_to_ip(inputs: &[Series]) -> PolarsResult<Series> {
             let ca = s.str()?;
             let mut builder =
                 BinaryChunkedBuilder::new(PlSmallStr::from_static("ip_address"), ca.len());
-            for opt_val in ca {
+            for opt_val in ca.iter() {
                 if let Some(val) = opt_val {
                     if let Ok(ipv4) = val.parse::<std::net::Ipv4Addr>() {
                         builder.append_value(ipv4.to_ipv6_mapped().octets().as_slice());
@@ -448,7 +417,7 @@ pub fn series_to_ipaddrs(s: &Series) -> PolarsResult<Vec<IpEntry>> {
         DataType::String => {
             let ca = physical.str()?;
             Ok(ca
-                .into_iter()
+                .iter()
                 .map(|opt| match opt {
                     None => IpEntry::Null,
                     Some(v) => match v.parse::<IpAddr>() {
@@ -462,7 +431,7 @@ pub fn series_to_ipaddrs(s: &Series) -> PolarsResult<Vec<IpEntry>> {
             // IPv4 extension storage: u32 representing IPv4 address
             let ca = physical.u32()?;
             Ok(ca
-                .into_iter()
+                .iter()
                 .map(|opt| match opt {
                     None => IpEntry::Null,
                     Some(n) => IpEntry::Addr(IpAddr::V4(Ipv4Addr::from(n))),
@@ -474,7 +443,7 @@ pub fn series_to_ipaddrs(s: &Series) -> PolarsResult<Vec<IpEntry>> {
             // IPv4-mapped addresses stored as ::ffff:a.b.c.d)
             let ca = physical.binary()?;
             Ok(ca
-                .into_iter()
+                .iter()
                 .map(|opt| match opt {
                     None => IpEntry::Null,
                     Some(bytes) => {
@@ -508,7 +477,7 @@ fn pl_ipv4_from_str(inputs: &[Series]) -> PolarsResult<Series> {
     let mut builder =
         PrimitiveChunkedBuilder::<UInt32Type>::new(PlSmallStr::from_static("ipv4"), ca.len());
 
-    for opt_value in ca {
+    for opt_value in ca.iter() {
         if let Some(value) = opt_value {
             match value.parse::<std::net::Ipv4Addr>() {
                 Ok(ipv4) => builder.append_value(u32::from(ipv4)),

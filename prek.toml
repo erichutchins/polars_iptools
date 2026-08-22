@@ -1,0 +1,51 @@
+# prek configuration (https://prek.j178.dev).
+# Replaces .pre-commit-config.yaml; run via `just lint` or `prek run --all-files`.
+# yaml-language-server: $schema=https://www.schemastore.org/prek.json
+
+[[repos]]
+repo = "https://github.com/astral-sh/ruff-pre-commit"
+rev = "v0.16.4"
+
+[[repos.hooks]]
+id = "ruff"
+name = "ruff linter"
+args = ["--fix"]
+
+[[repos.hooks]]
+id = "ruff"
+name = "ruff import sorter"
+args = ["--fix", "--select", "I"]
+
+[[repos.hooks]]
+id = "ruff-format"
+name = "ruff formatter"
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "rust-fmt"
+name = "Rust formatting"
+description = "Run cargo fmt on files included in the commit."
+entry = "cargo fmt --all --"
+language = "system"
+types = ["file", "rust"]
+pass_filenames = true
+
+[[repos.hooks]]
+id = "rust-clippy"
+name = "Rust clippy"
+description = "Run cargo clippy on files included in the commit."
+entry = "cargo clippy --all-targets --all-features -- -Dclippy::all"
+language = "system"
+types = ["file", "rust"]
+pass_filenames = false
+
+[[repos.hooks]]
+id = "mypy"
+name = "mypy"
+description = "Type-check the Python package against mypy.ini."
+entry = "uv run --group dev mypy polars_iptools"
+language = "system"
+types = ["python"]
+pass_filenames = false

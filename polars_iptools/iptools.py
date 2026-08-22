@@ -3,7 +3,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import polars as pl
 from polars.plugins import register_plugin_function
@@ -16,18 +16,18 @@ if TYPE_CHECKING:
 LIB = Path(__file__).parent
 
 __all__ = [
-    "is_valid",
-    "is_private",
+    "extract_all_ips",
+    "extract_ips",
+    "extract_private_ips",
+    "extract_public_ips",
     "ipv4_to_numeric",
+    "is_in",
+    "is_private",
+    "is_valid",
     "numeric_to_ipv4",
-    "to_string",
     "to_address",
     "to_ipv4",
-    "is_in",
-    "extract_ips",
-    "extract_public_ips",
-    "extract_private_ips",
-    "extract_all_ips",
+    "to_string",
 ]
 
 
@@ -484,7 +484,7 @@ def extract_all_ips(expr: IntoExpr, ipv6: bool = False, **kwargs) -> pl.Expr:
     return extract_ips(expr, ipv6=ipv6, **kwargs)
 
 
-def is_in(expr: IntoExpr, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
+def is_in(expr: IntoExpr, networks: pl.Expr | Iterable[str]) -> pl.Expr:
     """
     Returns a boolean if IPv4 or IPv6 address is in any of the network ranges in "networks"
 
@@ -617,7 +617,7 @@ class IpExprExt:
         )
         return extract_all_ips(self._expr, ipv6)
 
-    def is_in(self, networks: Union[pl.Expr, Iterable[str]]) -> pl.Expr:
+    def is_in(self, networks: pl.Expr | Iterable[str]) -> pl.Expr:
         return is_in(self._expr, networks)
 
 
@@ -696,5 +696,5 @@ class IpSeriesExt:
         )
         return pl.select(extract_all_ips(self._s, ipv6)).to_series()
 
-    def is_in(self, networks: Union[pl.Expr, Iterable[str]]) -> pl.Series:
+    def is_in(self, networks: pl.Expr | Iterable[str]) -> pl.Series:
         return pl.select(is_in(self._s, networks)).to_series()

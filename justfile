@@ -7,39 +7,21 @@ _default:
 setup:
     uv sync --all-extras --dev --group docs
 
-# Ensure maturin is available; install via uv if missing
-require-maturin:
-    if ! command -v maturin >/dev/null 2>&1; then \
-        echo "maturin not found — installing via uv"; \
-        uv tool install maturin; \
-    else \
-        echo "maturin found"; \
-    fi
-
-# Ensure hatch is available; install via uv if missing
-require-hatch:
-    if ! command -v hatch >/dev/null 2>&1; then \
-        echo "hatch not found — installing via uv"; \
-        uv tool install hatch; \
-    else \
-        echo "hatch found"; \
-    fi
-
 # Install the package in development mode
-install: setup require-maturin
-    unset CONDA_PREFIX && source .venv/bin/activate && maturin develop --uv
+install: setup
+    uv run maturin develop --uv
 
 # Install the package in release mode
-install-release: setup require-maturin
-    unset CONDA_PREFIX && source .venv/bin/activate && maturin develop --uv --release
+install-release: setup
+    uv run maturin develop --uv --release
 
 # Install prek git hooks
-hooks:
-    prek install
+hooks: setup
+    uv run prek install
 
-# Run all pre-commit hooks
-lint:
-    prek run --all-files
+# Run all prek hooks
+lint: setup
+    uv run prek run --all-files
 
 # Clean up build artifacts
 clean:
@@ -56,12 +38,12 @@ test: setup
     uv run pytest tests
 
 # Run tests across all supported Python versions
-test-matrix: setup require-hatch
-    hatch run test:tests
+test-matrix: setup
+    uv run hatch run test:tests
 
 # Run tests for a specific python version (e.g. 3.12)
-test-version version: setup require-hatch
-    hatch run +py={{version}} test:tests
+test-version version: setup
+    uv run hatch run +py={{version}} test:tests
 
 # Run the example script
 run: install
